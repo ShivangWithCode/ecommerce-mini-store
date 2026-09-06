@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Invoice #{{ order.id }} - MiniStore{% endblock %}
+
+{% block content %}
+<div class="invoice-wrapper">
+    <div class="invoice-actions no-print">
+        <button onclick="window.print()" class="btn btn-dark">Print Invoice</button>
+        <a href="{{ url_for('order_history') }}" class="btn-outline-dark">&larr; Back to My Orders</a>
+    </div>
+
+    <div class="invoice-box">
+        <!-- Invoice Header -->
+        <div class="invoice-header">
+            <div>
+                <h1 style="margin: 0; color: var(--dark); font-size: 26px;">Mini<span style="color: var(--primary);">Store</span></h1>
+                <p class="text-muted" style="margin: 4px 0 0; font-size: 13px;">Official Tax Invoice / Bill Receipt</p>
+            </div>
+            <div style="text-align: right;">
+                <h2 style="margin: 0; font-size: 20px;">INVOICE</h2>
+                <div style="margin-top: 4px; font-size: 14px;"><strong>Invoice #:</strong> MS-{{ order.id }}</div>
+                <div style="font-size: 13px;" class="text-muted"><strong>Date:</strong> {{ order.order_date }}</div>
+                <div style="margin-top: 5px;">
+                    <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+                </div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+
+        <!-- Bill To / Customer Details -->
+        <div class="invoice-meta-row">
+            <div class="invoice-meta-col">
+                <span class="invoice-meta-label">Billed To (Customer):</span>
+                <div class="font-bold">{{ order.customer_name }}</div>
+                <div class="text-muted" style="font-size: 13px;">{{ order.customer_email }}</div>
+                {% if order.phone %}
+                <div class="text-muted" style="font-size: 13px;">Phone: {{ order.phone }}</div>
+                {% endif %}
+            </div>
+
+            <div class="invoice-meta-col">
+                <span class="invoice-meta-label">Delivery Address:</span>
+                <p style="white-space: pre-line; margin: 4px 0 0; font-size: 13px; color: #444;">{{ order.shipping_address or 'Standard Delivery' }}</p>
+            </div>
+
+            <div class="invoice-meta-col">
+                <span class="invoice-meta-label">Payment Information:</span>
+                <div class="font-semibold">{{ order.payment_method or 'Cash on Delivery' }}</div>
+                <div style="margin-top: 4px;">
+                    {% if 'online' in (order.payment_method or '')|lower or 'upi' in (order.payment_method or '')|lower %}
+                    <span style="color: #28a745; font-size: 12px; font-weight: bold;">Paid Online</span>
+                    {% else %}
+                    <span style="color: #ff6600; font-size: 12px; font-weight: bold;">To be collected upon delivery</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <table class="admin-table invoice-table" style="margin-top: 25px;">
+            <thead>
+                <tr>
+                    <th>Item Description</th>
+                    <th style="text-align: right;">Unit Price</th>
+                    <th style="text-align: center;">Quantity</th>
+                    <th style="text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><strong>{{ item.name }}</strong></td>
+                    <td style="text-align: right;">₹{{ "%.2f"|format(item.price) }}</td>
+                    <td style="text-align: center;">{{ item.quantity }}</td>
+                    <td style="text-align: right;" class="font-semibold">₹{{ "%.2f"|format(item.price * item.quantity) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Invoice Calculation -->
+        <div class="invoice-total-section">
+            <div class="invoice-total-box">
+                <div class="price-row">
+                    <span>Subtotal:</span>
+                    <span>₹{{ "%.2f"|format(order.total_amount) }}</span>
+                </div>
+                <div class="price-row">
+                    <span>Shipping Charges:</span>
+                    <span style="color: #28a745; font-weight: 600;">FREE</span>
+                </div>
+                <hr style="border: 0; border-top: 1px solid var(--border); margin: 8px 0;">
+                <div class="price-row" style="font-size: 18px; font-weight: 700;">
+                    <span>Grand Total:</span>
+                    <span class="text-primary">₹{{ "%.2f"|format(order.total_amount) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer note -->
+        <div class="invoice-footer-note">
+            <p>Thank you for your business! If you have any questions about this invoice, please contact support.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

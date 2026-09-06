@@ -14,14 +14,19 @@
             <input type="text" name="name" required placeholder="e.g. Classic White Sneakers" value="{{ product.name if product else '' }}">
         </div>
 
+        <div class="form-group">
+            <label>Category *</label>
+            <input type="text" name="category" required placeholder="e.g. Clothing, Shoes" value="{{ (product.category if product and product.category) or '' }}">
+        </div>
+
         <div class="form-row">
-            <div class="form-group col-half">
-                <label>Category *</label>
-                <input type="text" name="category" required placeholder="e.g. Clothing, Shoes" value="{{ (product.category if product and product.category) or '' }}">
-            </div>
             <div class="form-group col-half">
                 <label>Price (₹) *</label>
                 <input type="number" name="price" step="0.01" min="0" required placeholder="e.g. 799" value="{{ product.price if product and product.price is not none else '' }}">
+            </div>
+            <div class="form-group col-half">
+                <label>Stock Quantity *</label>
+                <input type="number" name="stock" min="0" required placeholder="e.g. 15" value="{{ product.stock if product and product.stock is not none else '15' }}">
             </div>
         </div>
 

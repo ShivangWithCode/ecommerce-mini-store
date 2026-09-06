@@ -2,36 +2,70 @@
 {% block title %}Home - E-Commerce Store{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Welcome to My E-Commerce Mini Store!</h1>
+<h1 class="page-title">Welcome to Your E-Commerce Mini Store!</h1>
 
-<form method="GET" action="{{ url_for('home') }}" class="search-bar">
-    <input type="text" name="search" placeholder="Search products..." value="{{ search_query }}">
-    <select name="category">
-        <option value="">All Categories</option>
-        {% for cat in categories %}
-            <option value="{{ cat[0] }}" {% if selected_category == cat[0] %}selected{% endif %}>{{ cat[0] }}</option>
-        {% endfor %}
-    </select>
-    <button type="submit" class="btn">Search</button>
-</form>
+<!-- Filter & Search Controls Bar -->
+<div class="filter-wrapper">
+    <form method="GET" action="{{ url_for('home') }}" class="search-bar filter-bar" id="filter-form">
+        <div class="filter-input-group">
+            <input type="text" id="search-input" name="search" placeholder="Search by name or keyword..." value="{{ search_query }}" autocomplete="off">
+            <button type="button" id="search-clear-btn" class="search-clear-btn" style="{% if not search_query %}display: none;{% endif %}" title="Clear search">&times;</button>
+        </div>
 
-{% if products %}
-<div class="product-grid">
+        <select name="category" id="category-select" class="filter-select">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="sort" id="sort-select" class="filter-select">
+            <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest / Featured</option>
+            <option value="price_asc" {% if selected_sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+            <option value="price_desc" {% if selected_sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+            <option value="name_asc" {% if selected_sort == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
+        </select>
+
+        <noscript>
+            <button type="submit" class="btn">Filter</button>
+        </noscript>
+    </form>
+
+    <div class="filter-meta-bar">
+        <span id="results-count" class="results-count">Showing {{ products|length }} product{{ 's' if products|length != 1 else '' }}</span>
+        <a href="{{ url_for('home') }}" id="btn-clear-filters" class="btn-clear-filters" style="{% if not search_query and not selected_category and (not selected_sort or selected_sort == 'newest') %}display: none;{% endif %}">Reset All Filters</a>
+    </div>
+</div>
+
+<!-- Product Grid Container -->
+<div class="product-grid" id="product-grid" style="{% if not products %}display: none;{% endif %}">
     {% for product in products %}
-    <div class="product-card">
-        <a href="{{ url_for('product_detail', product_id=product[0]) }}">
-            <img src="{{ url_for('static', filename='images/' + product[5]) }}" alt="{{ product[1] }}">
+    <div class="product-card" id="card-prod-{{ product.id }}">
+        <a href="{{ url_for('product_detail', product_id=product.id) }}">
+            <img src="{{ url_for('static', filename='images/' + (product.image_url or 'bag.jpg')) }}" alt="{{ product.name }}" onerror="this.src='{{ url_for('static', filename='images/bag.jpg') }}'">
         </a>
-        <h3><a href="{{ url_for('product_detail', product_id=product[0]) }}">{{ product[1] }}</a></h3>
-        <p class="price">₹{{ product[2] }}</p>
-        <span class="category-badge">{{ product[4] }}</span>
+        <h3><a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.name }}</a></h3>
+        <p class="price">₹{{ product.price }}</p>
+        <span class="category-badge">{{ product.category }}</span>
+        <div style="margin-top: 8px;">
+            {% if product.stock is not none and product.stock <= 0 %}
+                <span class="stock-badge stock-out">Out of Stock</span>
+            {% elif product.stock is not none and product.stock <= 5 %}
+                <span class="stock-badge stock-low">Only {{ product.stock }} left!</span>
+            {% else %}
+                <span class="stock-badge stock-in">In Stock ({{ product.stock }})</span>
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 </div>
-{% else %}
-<div class="empty-state">
-    <h3>Koi product nahi mila</h3>
-    <p>Try a different search or category.</p>
+
+<!-- Dynamic Empty State -->
+<div class="empty-state" id="empty-state" style="{% if products %}display: none;{% endif %}">
+    <h3>No products found</h3>
+    <p>Try adjusting your search keywords, category filter, or sorting option.</p>
+    <button type="button" id="empty-clear-btn" class="btn" style="margin-top: 15px;">Clear All Filters</button>
 </div>
-{% endif %}
+
+<script src="{{ url_for('static', filename='js/filter.js') }}"></script>
 {% endblock %}

@@ -24,10 +24,10 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            flash("Kripya pehle login karein!")
+            flash("Please log in to continue.")
             return redirect(url_for('login'))
         if not session.get('is_admin'):
-            flash("Access denied! Sirf Admin hi is page ko open kar sakta hai.")
+            flash("Access denied. Admin privileges required.")
             return redirect(url_for('home'))
         return f(*args, **kwargs)
     return decorated_function
@@ -53,57 +53,124 @@ def get_db_connection():
     )
     return connection
 
-@app.route('/')
-def home():
-    search_query = request.args.get('search', '')
-    category = request.args.get('category', '')
-
+def fetch_filtered_products(search_query='', category='', sort='newest'):
     connection = get_db_connection()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
 
-    query = "SELECT * FROM products WHERE 1=1"
+    query = "SELECT id, name, price, description, category, image_url, stock FROM products WHERE 1=1"
     params = []
 
     if search_query:
-        query += " AND name LIKE %s"
-        params.append(f"%{search_query}%")
+        query += " AND (name LIKE %s OR description LIKE %s)"
+        params.extend([f"%{search_query}%", f"%{search_query}%"])
 
     if category:
         query += " AND category = %s"
         params.append(category)
 
+    if sort == 'price_asc':
+        query += " ORDER BY price ASC"
+    elif sort == 'price_desc':
+        query += " ORDER BY price DESC"
+    elif sort == 'name_asc':
+        query += " ORDER BY name ASC"
+    else:
+        query += " ORDER BY id DESC"
+
     cursor.execute(query, tuple(params))
     products = cursor.fetchall()
 
-    cursor.execute("SELECT DISTINCT category FROM products")
-    categories = cursor.fetchall()
+    cursor.execute("SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != '' ORDER BY category ASC")
+    category_rows = cursor.fetchall()
+    categories = [cat['category'] for cat in category_rows]
 
     connection.close()
-    return render_template('home.html', products=products, categories=categories, search_query=search_query, selected_category=category)
+    return products, categories
+
+@app.route('/')
+def home():
+    search_query = request.args.get('search', '').strip()
+    category = request.args.get('category', '').strip()
+    sort = request.args.get('sort', 'newest').strip()
+
+    products, categories = fetch_filtered_products(search_query, category, sort)
+
+    return render_template(
+        'home.html',
+        products=products,
+        categories=categories,
+        search_query=search_query,
+        selected_category=category,
+        selected_sort=sort
+    )
+
+@app.route('/api/products')
+def api_products():
+    search_query = request.args.get('search', '').strip()
+    category = request.args.get('category', '').strip()
+    sort = request.args.get('sort', 'newest').strip()
+
+    products, _ = fetch_filtered_products(search_query, category, sort)
+
+    serialized = []
+    for p in products:
+        serialized.append({
+            'id': p['id'],
+            'name': p['name'],
+            'price': float(p['price']),
+            'formatted_price': f"{float(p['price']):.2f}",
+            'description': p['description'] or '',
+            'category': p['category'] or 'General',
+            'image_url': p['image_url'] or 'bag.jpg',
+            'stock': p['stock'] if p['stock'] is not None else 0,
+            'detail_url': url_for('product_detail', product_id=p['id'])
+        })
+
+    return jsonify({
+        'count': len(serialized),
+        'products': serialized
+    })
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
     connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM products WHERE id = %s", (product_id,))
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT id, name, price, description, category, image_url, stock FROM products WHERE id = %s", (product_id,))
     product = cursor.fetchone()
     connection.close()
     return render_template('product_detail.html', product=product)
 
-@app.route('/add-to-cart/<int:product_id>')
+@app.route('/add-to-cart/<int:product_id>', methods=['GET', 'POST'])
 @login_required
 def add_to_cart(product_id):
     user_id = session['user_id']
     connection = get_db_connection()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("SELECT id, name, stock FROM products WHERE id = %s", (product_id,))
+    prod = cursor.fetchone()
+    if not prod:
+        connection.close()
+        flash("Product not found.")
+        return redirect(url_for('home'))
+
+    available_stock = prod['stock'] if prod['stock'] is not None else 0
+    if available_stock <= 0:
+        connection.close()
+        flash(f"Sorry, '{prod['name']}' is out of stock.")
+        return redirect(request.referrer or url_for('home'))
 
     cursor.execute(
-        "SELECT * FROM cart_items WHERE user_id = %s AND product_id = %s",
+        "SELECT quantity FROM cart_items WHERE user_id = %s AND product_id = %s",
         (user_id, product_id)
     )
     existing_item = cursor.fetchone()
 
     if existing_item:
+        if existing_item['quantity'] + 1 > available_stock:
+            connection.close()
+            flash(f"Cannot add more than available stock ({available_stock}) for '{prod['name']}'.")
+            return redirect(url_for('cart_page'))
         cursor.execute(
             "UPDATE cart_items SET quantity = quantity + 1 WHERE user_id = %s AND product_id = %s",
             (user_id, product_id)
@@ -183,25 +250,32 @@ def decrease_quantity(product_id):
 def api_update_cart(product_id, action):
     user_id = session['user_id']
     connection = get_db_connection()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
 
     if action == 'increase':
-        cursor.execute(
-            "UPDATE cart_items SET quantity = quantity + 1 WHERE user_id = %s AND product_id = %s",
-            (user_id, product_id)
-        )
+        cursor.execute("SELECT stock FROM products WHERE id = %s", (product_id,))
+        p = cursor.fetchone()
+        stock = p['stock'] if p and p['stock'] is not None else 999
+
+        cursor.execute("SELECT quantity FROM cart_items WHERE user_id = %s AND product_id = %s", (user_id, product_id))
+        cur = cursor.fetchone()
+        if cur and cur['quantity'] < stock:
+            cursor.execute(
+                "UPDATE cart_items SET quantity = quantity + 1 WHERE user_id = %s AND product_id = %s",
+                (user_id, product_id)
+            )
     elif action == 'decrease':
         cursor.execute(
             "SELECT quantity FROM cart_items WHERE user_id = %s AND product_id = %s",
             (user_id, product_id)
         )
         current = cursor.fetchone()
-        if current and current[0] <= 1:
+        if current and current['quantity'] <= 1:
             cursor.execute(
                 "DELETE FROM cart_items WHERE user_id = %s AND product_id = %s",
                 (user_id, product_id)
             )
-        else:
+        elif current:
             cursor.execute(
                 "UPDATE cart_items SET quantity = quantity - 1 WHERE user_id = %s AND product_id = %s",
                 (user_id, product_id)
@@ -213,15 +287,15 @@ def api_update_cart(product_id, action):
         (user_id, product_id)
     )
     updated = cursor.fetchone()
-    new_quantity = updated[0] if updated else 0
+    new_quantity = updated['quantity'] if updated else 0
 
     cursor.execute("""
-        SELECT SUM(products.price * cart_items.quantity)
+        SELECT SUM(products.price * cart_items.quantity) AS total
         FROM cart_items JOIN products ON cart_items.product_id = products.id
         WHERE cart_items.user_id = %s
     """, (user_id,))
     total_result = cursor.fetchone()
-    new_total = float(total_result[0]) if total_result[0] else 0
+    new_total = float(total_result['total']) if total_result and total_result['total'] else 0.0
 
     connection.close()
 
@@ -272,11 +346,11 @@ def signup():
         password = request.form.get('password')
 
         if len(password) < 6:
-            flash("Password kam se kam 6 characters ka hona chahiye!")
+            flash("Password must be at least 6 characters long.")
             return redirect(url_for('signup'))
 
         if len(name.strip()) == 0:
-            flash("Naam khaali nahi ho sakta!")
+            flash("Name field cannot be empty.")
             return redirect(url_for('signup'))
 
         hashed_password = generate_password_hash(password)
@@ -297,94 +371,178 @@ def signup():
 
         except mysql.connector.IntegrityError:
             connection.close()
-            flash("Ye email already registered hai! Login karo.")
+            flash("Email address is already registered. Please log in.")
             return redirect(url_for('signup'))
 
     return render_template('signup.html')
 
-@app.route('/place-order')
+@app.route('/checkout', methods=['GET', 'POST'])
 @login_required
-def place_order():
+def checkout():
     user_id = session['user_id']
     connection = get_db_connection()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT products.id, products.price, cart_items.quantity
+        SELECT products.id, products.name, products.price, products.stock, products.image_url, cart_items.quantity
         FROM cart_items
         JOIN products ON cart_items.product_id = products.id
         WHERE cart_items.user_id = %s
     """, (user_id,))
-    cart_rows = cursor.fetchall()
+    cart_items = cursor.fetchall()
 
-    if not cart_rows:
+    if not cart_items:
         connection.close()
+        flash("Your shopping cart is empty.")
         return redirect(url_for('cart_page'))
 
-    total_amount = 0
-    for row in cart_rows:
-        total_amount += float(row[1]) * row[2]
+    total = sum(float(item['price']) * item['quantity'] for item in cart_items)
 
-    cursor.execute(
-        "INSERT INTO orders (user_id, total_amount, status) VALUES (%s, %s, %s)",
-        (user_id, total_amount, 'Pending')
-    )
-    order_id = cursor.lastrowid
+    if request.method == 'POST':
+        full_name = request.form.get('full_name', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
+        city = request.form.get('city', '').strip()
+        pincode = request.form.get('pincode', '').strip()
+        payment_method = request.form.get('payment_method', 'Cash on Delivery (COD)')
 
-    for row in cart_rows:
-        product_id = row[0]
-        price = row[1]
-        quantity = row[2]
-        cursor.execute(
-            "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (%s, %s, %s, %s)",
-            (order_id, product_id, quantity, price)
-        )
+        if not full_name or not phone or not address or not city or not pincode:
+            connection.close()
+            flash("Please fill in all required delivery details.")
+            return render_template('checkout.html', cart_items=cart_items, total=total)
 
-    cursor.execute("DELETE FROM cart_items WHERE user_id = %s", (user_id,))
+        shipping_address = f"{full_name}\n{address}, {city} - {pincode}\nPhone: {phone}"
 
-    connection.commit()
+        # Validate stock availability
+        for item in cart_items:
+            stock = item['stock'] if item['stock'] is not None else 0
+            if item['quantity'] > stock:
+                connection.close()
+                flash(f"Sorry, insufficient stock for '{item['name']}' (Available: {stock}).")
+                return redirect(url_for('cart_page'))
+
+        try:
+            cursor.execute("""
+                INSERT INTO orders (user_id, total_amount, status, shipping_address, phone, payment_method)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (user_id, total, 'Pending', shipping_address, phone, payment_method))
+            order_id = cursor.lastrowid
+
+            for item in cart_items:
+                cursor.execute(
+                    "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (%s, %s, %s, %s)",
+                    (order_id, item['id'], item['quantity'], item['price'])
+                )
+                cursor.execute(
+                    "UPDATE products SET stock = stock - %s WHERE id = %s",
+                    (item['quantity'], item['id'])
+                )
+
+            cursor.execute("DELETE FROM cart_items WHERE user_id = %s", (user_id,))
+            connection.commit()
+            connection.close()
+
+            return redirect(url_for('order_success', order_id=order_id))
+
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            flash("An error occurred while processing the order. Transaction rolled back.")
+            return redirect(url_for('checkout'))
+
     connection.close()
-    return redirect(url_for('order_success', order_id=order_id))
+    return render_template('checkout.html', cart_items=cart_items, total=total)
+
+@app.route('/place-order')
+@login_required
+def place_order():
+    return redirect(url_for('checkout'))
 
 @app.route('/order-success/<int:order_id>')
 @login_required
 def order_success(order_id):
-    return render_template('order_success.html', order_id=order_id)
+    user_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT id, total_amount, order_date, status, shipping_address, phone, payment_method
+        FROM orders
+        WHERE id = %s AND user_id = %s
+    """, (order_id, user_id))
+    order = cursor.fetchone()
+    connection.close()
+
+    if not order:
+        flash("Order not found.")
+        return redirect(url_for('home'))
+
+    return render_template('order_success.html', order=order)
+
+@app.route('/order/invoice/<int:order_id>')
+@app.route('/invoice/<int:order_id>', endpoint='view_invoice')
+@login_required
+def order_invoice(order_id):
+    user_id = session['user_id']
+    is_admin = session.get('is_admin')
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    if is_admin:
+        cursor.execute("""
+            SELECT orders.*, users.name AS customer_name, users.email AS customer_email
+            FROM orders
+            JOIN users ON orders.user_id = users.id
+            WHERE orders.id = %s
+        """, (order_id,))
+    else:
+        cursor.execute("""
+            SELECT orders.*, users.name AS customer_name, users.email AS customer_email
+            FROM orders
+            JOIN users ON orders.user_id = users.id
+            WHERE orders.id = %s AND orders.user_id = %s
+        """, (order_id, user_id))
+
+    order = cursor.fetchone()
+    if not order:
+        connection.close()
+        flash("Invoice not found.")
+        return redirect(url_for('home'))
+
+    cursor.execute("""
+        SELECT products.name, order_items.quantity, order_items.price
+        FROM order_items
+        JOIN products ON order_items.product_id = products.id
+        WHERE order_items.order_id = %s
+    """, (order_id,))
+    items = cursor.fetchall()
+    connection.close()
+
+    return render_template('invoice.html', order=order, items=items)
 
 @app.route('/orders')
 @login_required
 def order_history():
     user_id = session['user_id']
     connection = get_db_connection()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
 
-    cursor.execute(
-        "SELECT id, total_amount, order_date, status FROM orders WHERE user_id = %s ORDER BY order_date DESC",
-        (user_id,)
-    )
+    cursor.execute("""
+        SELECT id, total_amount, order_date, status, shipping_address, phone, payment_method
+        FROM orders WHERE user_id = %s ORDER BY order_date DESC
+    """, (user_id,))
     orders = cursor.fetchall()
 
-    all_orders = []
     for order in orders:
-        order_id = order[0]
         cursor.execute("""
             SELECT products.name, order_items.quantity, order_items.price
             FROM order_items
             JOIN products ON order_items.product_id = products.id
             WHERE order_items.order_id = %s
-        """, (order_id,))
-        items = cursor.fetchall()
-
-        all_orders.append({
-            'id': order_id,
-            'total_amount': order[1],
-            'order_date': order[2],
-            'status': order[3] if len(order) > 3 and order[3] else 'Pending',
-            'products': items
-        })
+        """, (order['id'],))
+        order['products'] = cursor.fetchall()
 
     connection.close()
-    return render_template('order_history.html', all_orders=all_orders)
+    return render_template('order_history.html', all_orders=orders)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -407,7 +565,7 @@ def login():
                 return redirect(url_for('admin_dashboard'))
             return redirect(url_for('home'))
         else:
-            flash("Galat email ya password!")
+            flash("Invalid email or password.")
             return redirect(url_for('login'))
 
     return render_template('login.html')
@@ -460,7 +618,7 @@ def admin_dashboard():
 def admin_products():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT id, name, price, description, category, image_url FROM products ORDER BY id DESC")
+    cursor.execute("SELECT id, name, price, description, category, image_url, stock FROM products ORDER BY id DESC")
     products = cursor.fetchall()
     connection.close()
     return render_template('admin/products.html', products=products)
@@ -473,9 +631,10 @@ def admin_add_product():
         category = request.form.get('category', '').strip() or 'General'
         price = request.form.get('price', 0)
         description = request.form.get('description', '').strip()
+        stock = int(request.form.get('stock', 15) or 15)
 
         if not name or not price:
-            flash("Product name aur price zaroori hain!")
+            flash("Product name and price are required.")
             return redirect(url_for('admin_add_product'))
 
         # Handle image upload
@@ -489,13 +648,13 @@ def admin_add_product():
         connection = get_db_connection()
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO products (name, price, description, category, image_url) VALUES (%s, %s, %s, %s, %s)",
-            (name, price, description, category, filename)
+            "INSERT INTO products (name, price, description, category, image_url, stock) VALUES (%s, %s, %s, %s, %s, %s)",
+            (name, price, description, category, filename, stock)
         )
         connection.commit()
         connection.close()
 
-        flash("Naya product safalta-purvak add ho gaya!")
+        flash("Product added successfully.")
         return redirect(url_for('admin_products'))
 
     return render_template('admin/product_form.html', product=None)
@@ -511,6 +670,7 @@ def admin_edit_product(product_id):
         category = request.form.get('category', '').strip() or 'General'
         price = request.form.get('price', 0)
         description = request.form.get('description', '').strip()
+        stock = int(request.form.get('stock', 15) or 15)
 
         image_file = request.files.get('image')
         if image_file and image_file.filename and allowed_file(image_file.filename):
@@ -518,26 +678,26 @@ def admin_edit_product(product_id):
             filename = f"{int(time.time())}_{sec_name}"
             image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             cursor.execute(
-                "UPDATE products SET name = %s, price = %s, description = %s, category = %s, image_url = %s WHERE id = %s",
-                (name, price, description, category, filename, product_id)
+                "UPDATE products SET name = %s, price = %s, description = %s, category = %s, stock = %s, image_url = %s WHERE id = %s",
+                (name, price, description, category, stock, filename, product_id)
             )
         else:
             cursor.execute(
-                "UPDATE products SET name = %s, price = %s, description = %s, category = %s WHERE id = %s",
-                (name, price, description, category, product_id)
+                "UPDATE products SET name = %s, price = %s, description = %s, category = %s, stock = %s WHERE id = %s",
+                (name, price, description, category, stock, product_id)
             )
 
         connection.commit()
         connection.close()
-        flash("Product details update ho gayi hain!")
+        flash("Product updated successfully.")
         return redirect(url_for('admin_products'))
 
-    cursor.execute("SELECT id, name, price, description, category, image_url FROM products WHERE id = %s", (product_id,))
+    cursor.execute("SELECT id, name, price, description, category, image_url, stock FROM products WHERE id = %s", (product_id,))
     product = cursor.fetchone()
     connection.close()
 
     if not product:
-        flash("Product nahi mila!")
+        flash("Product not found.")
         return redirect(url_for('admin_products'))
 
     return render_template('admin/product_form.html', product=product)
@@ -548,11 +708,12 @@ def admin_delete_product(product_id):
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("DELETE FROM cart_items WHERE product_id = %s", (product_id,))
+    cursor.execute("DELETE FROM order_items WHERE product_id = %s", (product_id,))
     cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
     connection.commit()
     connection.close()
 
-    flash("Product delete kar diya gaya hai.")
+    flash("Product deleted successfully.")
     return redirect(url_for('admin_products'))
 
 @app.route('/admin/orders')
@@ -563,6 +724,7 @@ def admin_orders():
 
     cursor.execute("""
         SELECT orders.id, orders.total_amount, orders.order_date, orders.status,
+               orders.shipping_address, orders.phone, orders.payment_method,
                users.name AS customer_name, users.email AS customer_email
         FROM orders
         JOIN users ON orders.user_id = users.id
@@ -592,7 +754,7 @@ def admin_update_order_status(order_id):
         cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (new_status, order_id))
         connection.commit()
         connection.close()
-        flash(f"Order #{order_id} ka status '{new_status}' update ho gaya!")
+        flash(f"Order #{order_id} status updated to '{new_status}'.")
     return redirect(url_for('admin_orders'))
 
 

@@ -1,19 +1,22 @@
-# 🛒 E-Commerce Mini Store
+# E-Commerce Mini Store
 
 A full-stack e-commerce web application built with Flask, MySQL, and vanilla JavaScript.
 
 ## Features
 
-- User Signup/Login with password hashing
-- Product listing with search & category filter
-- Cart system (database-backed, AJAX-powered — no page reload)
-- Place Order & Order History with real-time status badges
+- User Authentication (Signup/Login with secure password hashing)
+- Product catalog with search and category filtering
+- Dynamic Inventory & Stock Management (real-time stock deduction, low-stock warnings, out-of-stock badges)
+- Interactive Shopping Cart (AJAX-powered quantity updates without page reload)
+- Multi-step Checkout Flow (shipping address validation, payment selection: COD / UPI)
+- Printable Tax Invoices (auto-generated invoices with printable layout)
+- Customer Order History with real-time status tracking
 - **Admin Control Panel:**
-  - Real-time business metrics (Revenue, Orders, Products, Users)
-  - Full Product CRUD (Add, Edit, Delete with Image Upload)
-  - Order Management & Status Tracking (Pending, Processing, Shipped, Delivered, Cancelled)
-- Role-based route protection (`@login_required`, `@admin_required`)
-- Flash messages & template inheritance
+  - Real-time business metrics (Revenue, Orders, Products, Customers)
+  - Product Catalog Management (Add, Edit, Delete with image upload and stock control)
+  - Customer Order Processing (Status updates: Pending, Processing, Shipped, Delivered, Cancelled)
+- Role-based Access Control (`@login_required`, `@admin_required`)
+- Jinja2 multi-level template inheritance and clean, responsive UI
 
 ## Tech Stack
 

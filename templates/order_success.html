@@ -1,13 +1,37 @@
 {% extends "base.html" %}
-
-{% block title %}Order Successful{% endblock %}
+{% block title %}Order Successful - MiniStore{% endblock %}
 
 {% block content %}
+<div class="admin-card" style="max-width: 650px; margin: 30px auto; text-align: center; padding: 40px 25px;">
+    <div style="font-size: 48px; color: var(--success); font-weight: bold; margin-bottom: 10px;">&#10003;</div>
+    <h1 style="color: var(--success); margin-bottom: 5px;">Order Placed Successfully!</h1>
+    <p class="text-muted" style="font-size: 16px;">Thank you for shopping with us! Your order has been received.</p>
 
-<h1>Order Placed Successfully!</h1>
+    <div style="background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 25px 0; text-align: left;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+            <strong>Order ID:</strong>
+            <span class="font-bold text-primary">#{{ order.id }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+            <strong>Total Amount:</strong>
+            <span class="font-bold">₹{{ "%.2f"|format(order.total_amount) }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+            <strong>Payment Method:</strong>
+            <span>{{ order.payment_method }}</span>
+        </div>
+        {% if order.shipping_address %}
+        <div>
+            <strong>Delivery Address:</strong>
+            <p style="white-space: pre-line; margin: 5px 0 0; color: #555;">{{ order.shipping_address }}</p>
+        </div>
+        {% endif %}
+    </div>
 
-<p>Your Order ID: #{{ order_id }}</p>
-
-<a href="{{ url_for('home') }}">Continue Shopping</a>
-
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a href="{{ url_for('order_invoice', order_id=order.id) }}" class="btn btn-dark" target="_blank">View & Print Invoice</a>
+        <a href="{{ url_for('order_history') }}" class="btn-outline-dark">Track in My Orders</a>
+        <a href="{{ url_for('home') }}" class="btn">Continue Shopping</a>
+    </div>
+</div>
 {% endblock %}

@@ -1,26 +1,65 @@
 {% extends "base.html" %}
 {% block title %}My Orders{% endblock %}
 {% block content %}
-<h1 class="page-title">My Orders</h1>
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h1 class="page-title" style="margin: 0;">My Orders</h1>
+    <a href="{{ url_for('home') }}" class="btn-sm btn-outline">&larr; Back to Shop</a>
+</div>
 
 {% if all_orders %}
-    {% for order in all_orders %}
-    <div class="order-card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Order #{{ order.id }}</h3>
-            <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+    <div class="order-list">
+        {% for order in all_orders %}
+        <div class="order-card">
+            <div class="order-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
+                <div>
+                    <h3 style="margin: 0 0 5px 0; color: #1e293b;">Order #{{ order.id }}</h3>
+                    <small class="text-muted">Placed on: {{ order.order_date }}</small>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="badge badge-payment">{{ order.payment_method or 'COD' }}</span>
+                    <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+                    <a href="{{ url_for('view_invoice', order_id=order.id) }}" class="btn-sm btn-invoice" target="_blank" title="View / Print Tax Invoice">Invoice</a>
+                </div>
+            </div>
+
+            <div class="order-body" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                <div class="order-items-section">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.95rem; color: #64748b;">ITEMS ORDERED</h4>
+                    <ul class="order-item-list" style="list-style: none; padding: 0; margin: 0;">
+                        {% for item in order.products %}
+                        <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #f1f5f9; font-size: 0.95rem;">
+                            <span>
+                                <strong>{{ item.name if item.name is defined else item[0] }}</strong> 
+                                <span class="text-muted">&times; {{ item.quantity if item.quantity is defined else item[1] }}</span>
+                            </span>
+                            <span class="font-bold">₹{{ "%.2f"|format(item.price if item.price is defined else item[2]) }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div style="text-align: right; margin-top: 12px; font-size: 1.05rem;">
+                        <span>Total Paid: </span><strong class="text-primary" style="font-size: 1.2rem;">₹{{ "%.2f"|format(order.total_amount) }}</strong>
+                    </div>
+                </div>
+
+                <div class="order-shipping-section" style="background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #e2e8f0; font-size: 0.88rem;">
+                    <h4 style="margin: 0 0 8px 0; font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Shipping To</h4>
+                    {% if order.shipping_address %}
+                        <p style="margin: 0 0 6px 0; line-height: 1.4; color: #334155; white-space: pre-line;">{{ order.shipping_address }}</p>
+                        {% if order.phone %}
+                            <p style="margin: 0; color: #64748b;"><strong>Phone:</strong> {{ order.phone }}</p>
+                        {% endif %}
+                    {% else %}
+                        <p style="margin: 0; color: #94a3b8; font-style: italic;">Standard Delivery</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <p>{{ order.order_date }} — <strong>₹{{ order.total_amount }}</strong></p>
-        <ul>
-            {% for item in order.products %}
-                <li>{{ item[0] }} × {{ item[1] }} — ₹{{ item[2] }}</li>
-            {% endfor %}
-        </ul>
+        {% endfor %}
     </div>
-    {% endfor %}
 {% else %}
     <div class="empty-state">
-        <h3>No orders found.</h3>
+        <h3>No orders placed yet</h3>
+        <p class="text-muted" style="margin-bottom: 20px;">Explore our catalog and find something you like.</p>
         <a href="{{ url_for('home') }}" class="btn">Shop Now</a>
     </div>
 {% endif %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Checkout - E-Commerce Store{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Secure Checkout</h1>
+
+<form action="{{ url_for('checkout') }}" method="POST" class="checkout-grid">
+    <!-- Left Column: Delivery & Payment Details -->
+    <div class="checkout-details">
+        <div class="form-card" style="max-width: 100%; margin: 0 0 20px 0; padding: 25px;">
+            <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 20px;">1. Delivery Address</h2>
+            
+            <div class="form-group">
+                <label for="full_name">Full Name *</label>
+                <input type="text" id="full_name" name="full_name" required value="{{ session.user_name or '' }}" placeholder="Enter your full name">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number *</label>
+                <input type="tel" id="phone" name="phone" required placeholder="10-digit mobile number" pattern="[0-9]{10}">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Street Address / Landmark *</label>
+                <input type="text" id="address" name="address" required placeholder="Flat, House no., Building, Apartment">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-half">
+                    <label for="city">City / Town *</label>
+                    <input type="text" id="city" name="city" required placeholder="e.g. New Delhi">
+                </div>
+                <div class="form-group col-half">
+                    <label for="pincode">Pincode *</label>
+                    <input type="text" id="pincode" name="pincode" required placeholder="6-digit pincode" pattern="[0-9]{6}">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card" style="max-width: 100%; margin: 0; padding: 25px;">
+            <h2 style="margin-top: 0; margin-bottom: 15px; font-size: 20px;">2. Payment Method</h2>
+            
+            <div class="payment-options">
+                <label class="payment-radio-box">
+                    <input type="radio" name="payment_method" value="Cash on Delivery (COD)" checked>
+                    <div class="payment-text">
+                        <strong>Cash on Delivery (COD)</strong>
+                        <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Pay via cash or UPI upon delivery.</p>
+                    </div>
+                </label>
+
+                <label class="payment-radio-box">
+                    <input type="radio" name="payment_method" value="UPI / Online Payment">
+                    <div class="payment-text">
+                        <strong>UPI / Online Payment</strong>
+                        <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Google Pay, PhonePe, Paytm, or Net Banking.</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Order Summary -->
+    <div class="checkout-summary">
+        <div class="admin-card" style="position: sticky; top: 90px;">
+            <h2 style="margin-top: 0; margin-bottom: 15px; font-size: 18px;">Order Summary</h2>
+            
+            <div class="checkout-items-list">
+                {% for item in cart_items %}
+                <div class="checkout-item-row">
+                    <img src="{{ url_for('static', filename='images/' + (item.image_url or 'bag.jpg')) }}" alt="{{ item.name }}" class="checkout-item-thumb" onerror="this.src='{{ url_for('static', filename='images/bag.jpg') }}'">
+                    <div class="checkout-item-info">
+                        <strong>{{ item.name }}</strong>
+                        <div class="text-muted" style="font-size: 13px;">Qty: {{ item.quantity }} × ₹{{ "%.2f"|format(item.price) }}</div>
+                    </div>
+                    <div class="font-bold">₹{{ "%.2f"|format(item.price * item.quantity) }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="checkout-price-calc">
+                <div class="price-row">
+                    <span>Subtotal</span>
+                    <span>₹{{ "%.2f"|format(total) }}</span>
+                </div>
+                <div class="price-row">
+                    <span>Delivery Charges</span>
+                    <span style="color: #28a745; font-weight: 600;">FREE</span>
+                </div>
+                <hr style="border: 0; border-top: 1px solid var(--border); margin: 12px 0;">
+                <div class="price-row total-row">
+                    <strong>Total Amount</strong>
+                    <strong class="text-primary" style="font-size: 20px;">₹{{ "%.2f"|format(total) }}</strong>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-block btn-lg" style="margin-top: 20px;">
+                Confirm & Place Order
+            </button>
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="{{ url_for('cart_page') }}" class="btn-link">&larr; Return to Cart</a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

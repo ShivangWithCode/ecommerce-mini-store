@@ -1,14 +1,27 @@
 {% extends "base.html" %}
-{% block title %}{{ product[1] }}{% endblock %}
+{% block title %}{{ product.name }}{% endblock %}
 {% block content %}
 <div class="product-detail">
-    <img src="{{ url_for('static', filename='images/' + product[5]) }}" alt="{{ product[1] }}">
+    <img src="{{ url_for('static', filename='images/' + (product.image_url or 'bag.jpg')) }}" alt="{{ product.name }}" onerror="this.src='{{ url_for('static', filename='images/bag.jpg') }}'">
     <div class="info">
-        <h1>{{ product[1] }}</h1>
-        <span class="category-badge">{{ product[4] }}</span>
-        <p class="price">₹{{ product[2] }}</p>
-        <p>{{ product[3] }}</p>
-        <a href="{{ url_for('add_to_cart', product_id=product[0]) }}" class="btn">Add to Cart</a>
+        <h1>{{ product.name }}</h1>
+        <span class="category-badge">{{ product.category }}</span>
+        <p class="price">₹{{ product.price }}</p>
+        <div style="margin: 10px 0;">
+            {% if product.stock is not none and product.stock <= 0 %}
+                <span class="stock-badge stock-out">Out of Stock</span>
+            {% elif product.stock is not none and product.stock <= 5 %}
+                <span class="stock-badge stock-low">Hurry, only {{ product.stock }} items left!</span>
+            {% else %}
+                <span class="stock-badge stock-in">In Stock ({{ product.stock }} available)</span>
+            {% endif %}
+        </div>
+        <p>{{ product.description if product.description else '' }}</p>
+        {% if product.stock is not none and product.stock <= 0 %}
+            <button class="btn btn-disabled" disabled style="cursor: not-allowed; opacity: 0.6; background-color: #6c757d;">Out of Stock</button>
+        {% else %}
+            <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="btn">Add to Cart</a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
