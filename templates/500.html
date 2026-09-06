@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Server Error{% endblock %}
+{% block content %}
+<h1>500 - Something Went Wrong</h1>
+<p>Hamari taraf se kuch galat ho gaya. Please try again later.</p>
+<a href="{{ url_for('home') }}">Go to Home</a>
+{% endblock %}

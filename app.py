@@ -245,6 +245,14 @@ def signup():
         email = request.form.get('email')
         password = request.form.get('password')
 
+        if len(password) < 6:
+            flash("Password kam se kam 6 characters ka hona chahiye!")
+            return redirect(url_for('signup'))
+
+        if len(name.strip()) == 0:
+            flash("Naam khaali nahi ho sakta!")
+            return redirect(url_for('signup'))
+
         hashed_password = generate_password_hash(password)
 
         connection = get_db_connection()
@@ -255,8 +263,10 @@ def signup():
                 "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
                 (name, email, hashed_password)
             )
+
             connection.commit()
             connection.close()
+
             return redirect(url_for('home'))
 
         except mysql.connector.IntegrityError:
@@ -379,6 +389,14 @@ def logout():
 @app.route('/about')
 def about():
     return render_template("about.html")
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
