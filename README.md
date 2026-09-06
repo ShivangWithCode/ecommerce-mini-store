@@ -37,4 +37,14 @@ A full-stack e-commerce web application built with Flask, MySQL, and vanilla Jav
 
 ## Screenshots
 
-(Add screenshots here later)
+### 🛍️ Storefront & Product Catalog
+![Storefront](screenshots/home.png)
+
+### 📊 Admin Dashboard & Analytics
+![Admin Dashboard](screenshots/admin_dashboard.png)
+
+### 📦 Customer Order History
+![Order History](screenshots/orders.png)
+
+### 🧾 Tax Invoice
+![Tax Invoice](screenshots/invoice.png)
