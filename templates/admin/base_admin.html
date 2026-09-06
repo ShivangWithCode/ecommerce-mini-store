@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{% block admin_title %}Admin{% endblock %} - MiniStore Admin{% endblock %}
+
+{% block content %}
+<div class="admin-tabs-nav">
+    <a href="{{ url_for('admin_dashboard') }}" class="admin-tab {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="{{ url_for('admin_products') }}" class="admin-tab {% if 'product' in request.endpoint %}active{% endif %}">Products</a>
+    <a href="{{ url_for('admin_orders') }}" class="admin-tab {% if request.endpoint == 'admin_orders' %}active{% endif %}">Orders</a>
+</div>
+
+{% block admin_content %}{% endblock %}
+{% endblock %}

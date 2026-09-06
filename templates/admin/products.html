@@ -1,0 +1,51 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}Manage Products{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header-row">
+    <h1 class="page-title">Manage Products</h1>
+    <a href="{{ url_for('admin_add_product') }}" class="btn">➕ Add New Product</a>
+</div>
+
+<div class="admin-card">
+    {% if products %}
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td>
+                        <img src="{{ url_for('static', filename='images/' + (p.image_url or 'bag.jpg')) }}" 
+                             alt="{{ p.name }}" class="admin-thumb" onerror="this.src='{{ url_for('static', filename='images/bag.jpg') }}'">
+                    </td>
+                    <td><strong>{{ p.name }}</strong></td>
+                    <td><span class="category-badge">{{ p.category }}</span></td>
+                    <td class="font-bold text-primary">₹{{ "%.2f"|format(p.price) }}</td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{{ url_for('admin_edit_product', product_id=p.id) }}" class="btn-sm btn-edit">✏️ Edit</a>
+                        <form action="{{ url_for('admin_delete_product', product_id=p.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Product delete karein?');">
+                            <button type="submit" class="btn-sm btn-danger">🗑️ Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>Koi product nahi mila!</h3>
+        <a href="{{ url_for('admin_add_product') }}" class="btn">Add Product</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

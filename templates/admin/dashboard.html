@@ -1,0 +1,77 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}Dashboard{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header-row">
+    <h1 class="page-title">Admin Dashboard</h1>
+    <a href="{{ url_for('admin_add_product') }}" class="btn">Add Product</a>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(255,102,0,0.12); color: #ff6600;"></div>
+        <div class="stat-info">
+            <span class="stat-label">Total Revenue</span>
+            <h2 class="stat-value">₹{{ "%.2f"|format(stats.total_revenue) }}</h2>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(40,167,69,0.12); color: #28a745;"></div>
+        <div class="stat-info">
+            <span class="stat-label">Total Orders</span>
+            <h2 class="stat-value">{{ stats.total_orders }}</h2>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(23,162,184,0.12); color: #17a2b8;"></div>
+        <div class="stat-info">
+            <span class="stat-label">Total Products</span>
+            <h2 class="stat-value">{{ stats.total_products }}</h2>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(111,66,193,0.12); color: #6f42c1;"></div>
+        <div class="stat-info">
+            <span class="stat-label">Total Customers</span>
+            <h2 class="stat-value">{{ stats.total_users }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2>Recent Orders</h2>
+        <a href="{{ url_for('admin_orders') }}" class="btn-link">View All &rarr;</a>
+    </div>
+    {% if recent_orders %}
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in recent_orders %}
+                <tr>
+                    <td><strong>#{{ o.id }}</strong></td>
+                    <td>{{ o.customer_name }}</td>
+                    <td>{{ o.order_date }}</td>
+                    <td class="font-bold text-primary">₹{{ "%.2f"|format(o.total_amount) }}</td>
+                    <td><span class="badge badge-{{ o.status|lower }}">{{ o.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>Koi order nahi mila.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

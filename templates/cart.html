@@ -6,24 +6,30 @@
 {% if cart_items %}
     {% for item in cart_items %}
     <div class="cart-item" id="row-{{ item.id }}">
-        <div>
-            <h3>{{ item.name }}</h3>
-            <p>Price: ₹{{ item.price }}</p>
+        <div class="cart-item-info">
+            <img src="{{ url_for('static', filename='images/' + (item.image_url or 'bag.jpg')) }}" 
+                 alt="{{ item.name }}" 
+                 class="cart-thumb" 
+                 onerror="this.src='{{ url_for('static', filename='images/bag.jpg') }}'">
+            <div>
+                <h3>{{ item.name }}</h3>
+                <p>Price: ₹{{ item.price }}</p>
+            </div>
         </div>
         <div class="qty-control">
-            <button onclick="updateCart({{ item.id }}, 'decrease')">➖</button>
+            <button onclick="updateCart({{ item.id }}, 'decrease')">-</button>
             <span id="quantity-{{ item.id }}">{{ item.quantity }}</span>
-            <button onclick="updateCart({{ item.id }}, 'increase')">➕</button>
+            <button onclick="updateCart({{ item.id }}, 'increase')">+</button>
         </div>
         <a href="{{ url_for('remove_from_cart', product_id=item.id) }}" class="btn btn-outline">Remove</a>
     </div>
     {% endfor %}
 
     <div class="cart-total">Total: ₹<span id="cart-total">{{ total }}</span></div>
-    <a href="{{ url_for('place_order') }}" class="btn btn-block">✅ Place Order</a>
+    <a href="{{ url_for('place_order') }}" class="btn btn-block">Place Order</a>
 {% else %}
     <div class="empty-state">
-        <h3>Aapka cart khaali hai 🛒</h3>
+        <h3>Aapka cart khaali hai</h3>
         <a href="{{ url_for('home') }}" class="btn">Start Shopping</a>
     </div>
 {% endif %}

@@ -6,7 +6,10 @@
 {% if all_orders %}
     {% for order in all_orders %}
     <div class="order-card">
-        <h3>Order #{{ order.id }}</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Order #{{ order.id }}</h3>
+            <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+        </div>
         <p>{{ order.order_date }} — <strong>₹{{ order.total_amount }}</strong></p>
         <ul>
             {% for item in order.products %}
@@ -17,7 +20,7 @@
     {% endfor %}
 {% else %}
     <div class="empty-state">
-        <h3>Koi order nahi mila 📦</h3>
+        <h3>No orders found.</h3>
         <a href="{{ url_for('home') }}" class="btn">Shop Now</a>
     </div>
 {% endif %}

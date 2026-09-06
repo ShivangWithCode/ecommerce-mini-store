@@ -8,7 +8,7 @@
         <span class="category-badge">{{ product[4] }}</span>
         <p class="price">₹{{ product[2] }}</p>
         <p>{{ product[3] }}</p>
-        <a href="{{ url_for('add_to_cart', product_id=product[0]) }}" class="btn">🛒 Add to Cart</a>
+        <a href="{{ url_for('add_to_cart', product_id=product[0]) }}" class="btn">Add to Cart</a>
     </div>
 </div>
 {% endblock %}

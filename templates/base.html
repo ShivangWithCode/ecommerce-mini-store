@@ -13,6 +13,9 @@
             <a href="{{ url_for('cart_page') }}">Cart</a>
             <a href="{{ url_for('order_history') }}">My Orders</a>
             {% if session.user_id %}
+                {% if session.is_admin %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="nav-admin-badge">⚡ Admin Panel</a>
+                {% endif %}
                 <span class="welcome-text">Hi, {{ session.user_name }}</span>
                 <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}

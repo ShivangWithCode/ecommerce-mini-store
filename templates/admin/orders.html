@@ -1,0 +1,61 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}Manage Orders{% endblock %}
+
+{% block admin_content %}
+<h1 class="page-title">Manage Customer Orders</h1>
+
+<div class="admin-card">
+    {% if orders %}
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td><strong>#{{ o.id }}</strong></td>
+                    <td>
+                        <div><strong>{{ o.customer_name }}</strong></div>
+                        <small class="text-muted">{{ o.customer_email }}</small>
+                    </td>
+                    <td style="white-space: nowrap;">{{ o.order_date }}</td>
+                    <td>
+                        <ul class="admin-order-items-list">
+                            {% for item in o.order_items %}
+                            <li>{{ item.name }} × {{ item.quantity }} (₹{{ "%.2f"|format(item.price * item.quantity) }})</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td class="font-bold text-primary">₹{{ "%.2f"|format(o.total_amount) }}</td>
+                    <td><span class="badge badge-{{ o.status|lower }}">{{ o.status }}</span></td>
+                    <td>
+                        <form action="{{ url_for('admin_update_order_status', order_id=o.id) }}" method="POST" class="status-form">
+                            <select name="status" class="select-status">
+                                {% for st in ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] %}
+                                <option value="{{ st }}" {% if o.status == st %}selected{% endif %}>{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-sm btn-dark">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>Abhi tak koi order place nahi hua hai</h3>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

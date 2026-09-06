@@ -1,0 +1,51 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}{{ 'Edit Product' if product else 'Add Product' }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header-row">
+    <h1 class="page-title">{{ 'Edit Product' if product else 'Add New Product' }}</h1>
+    <a href="{{ url_for('admin_products') }}" class="btn-outline-dark">&larr; Back to Products</a>
+</div>
+
+<div class="admin-card" style="max-width: 650px; margin: 0 auto;">
+    <form action="{{ url_for('admin_edit_product', product_id=product.id) if product else url_for('admin_add_product') }}" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Product Name *</label>
+            <input type="text" name="name" required placeholder="e.g. Classic White Sneakers" value="{{ product.name if product else '' }}">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-half">
+                <label>Category *</label>
+                <input type="text" name="category" required placeholder="e.g. Clothing, Shoes" value="{{ (product.category if product and product.category) or '' }}">
+            </div>
+            <div class="form-group col-half">
+                <label>Price (₹) *</label>
+                <input type="number" name="price" step="0.01" min="0" required placeholder="e.g. 799" value="{{ product.price if product and product.price is not none else '' }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Description</label>
+            <textarea name="description" rows="3" placeholder="Product details...">{% if product and product.description %}{{ product.description }}{% endif %}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Product Image</label>
+            {% if product and product.image_url %}
+            <p style="margin: 5px 0;">
+                <img src="{{ url_for('static', filename='images/' + product.image_url) }}" class="admin-thumb" onerror="this.src='{{ url_for('static', filename='images/bag.jpg') }}'">
+                <small class="text-muted">Current: {{ product.image_url }}</small>
+            </p>
+            {% endif %}
+            <input type="file" name="image" accept="image/*">
+            <small class="text-muted">Supports JPG, PNG, WEBP.</small>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn">{{ 'Save Changes' if product else 'Add Product' }}</button>
+            <a href="{{ url_for('admin_products') }}" class="btn btn-outline-dark">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
