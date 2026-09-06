@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+
+<h1>My Orders</h1>
+
+{% if all_orders %}
+
+    {% for order in all_orders %}
+
+        <div style="border:1px solid black; margin:10px; padding:10px;">
+
+            <h3>
+                Order #{{ order.id }} — {{ order.order_date }}
+            </h3>
+
+            <p>Total: ₹{{ order.total_amount }}</p>
+
+            <ul>
+                {% for item in order.products %}
+                    <li>
+                        {{ item[0] }} — Qty: {{ item[1] }} — Price: ₹{{ item[2] }}
+                    </li>
+                {% endfor %}
+            </ul>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>Aapne abhi tak koi order place nahi kiya.</p>
+
+{% endif %}
+
+{% endblock %}

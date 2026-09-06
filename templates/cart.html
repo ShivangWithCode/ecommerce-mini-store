@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}My Cart{% endblock %}
+
+{% block content %}
+
+<h1>My Cart</h1>
+
+{% if cart_items %}
+
+    {% for item in cart_items %}
+
+        <div id="row-{{ item.id }}">
+
+            <h3>{{ item.name }}</h3>
+
+            <p>
+                Price: ₹{{ item.price }}
+
+                <button onclick="updateCart({{ item.id }}, 'decrease')">
+                    ➖
+                </button>
+
+                <span id="quantity-{{ item.id }}">
+                    {{ item.quantity }}
+                </span>
+
+                <button onclick="updateCart({{ item.id }}, 'increase')">
+                    ➕
+                </button>
+            </p>
+
+            <a href="{{ url_for('remove_from_cart', product_id=item.id) }}">
+                Remove
+            </a>
+
+        </div>
+
+    {% endfor %}
+
+    <h2>
+        Total: ₹<span id="cart-total">{{ total }}</span>
+    </h2>
+
+    <a href="{{ url_for('place_order') }}">Place Order</a>
+
+{% else %}
+
+    <p>Aapka cart khaali hai.</p>
+
+{% endif %}
+
+{% endblock %}
