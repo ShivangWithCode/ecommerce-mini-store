@@ -1,39 +1,24 @@
 {% extends "base.html" %}
-
 {% block title %}My Orders{% endblock %}
-
 {% block content %}
-
-<h1>My Orders</h1>
+<h1 class="page-title">My Orders</h1>
 
 {% if all_orders %}
-
     {% for order in all_orders %}
-
-        <div style="border:1px solid black; margin:10px; padding:10px;">
-
-            <h3>
-                Order #{{ order.id }} — {{ order.order_date }}
-            </h3>
-
-            <p>Total: ₹{{ order.total_amount }}</p>
-
-            <ul>
-                {% for item in order.products %}
-                    <li>
-                        {{ item[0] }} — Qty: {{ item[1] }} — Price: ₹{{ item[2] }}
-                    </li>
-                {% endfor %}
-            </ul>
-
-        </div>
-
+    <div class="order-card">
+        <h3>Order #{{ order.id }}</h3>
+        <p>{{ order.order_date }} — <strong>₹{{ order.total_amount }}</strong></p>
+        <ul>
+            {% for item in order.products %}
+                <li>{{ item[0] }} × {{ item[1] }} — ₹{{ item[2] }}</li>
+            {% endfor %}
+        </ul>
+    </div>
     {% endfor %}
-
 {% else %}
-
-    <p>Aapne abhi tak koi order place nahi kiya.</p>
-
+    <div class="empty-state">
+        <h3>Koi order nahi mila 📦</h3>
+        <a href="{{ url_for('home') }}" class="btn">Shop Now</a>
+    </div>
 {% endif %}
-
 {% endblock %}
