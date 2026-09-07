@@ -1195,6 +1195,23 @@ def admin_update_order_status(order_id):
 def about():
     return render_template("about.html")
 
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        subject = request.form.get('subject', '').strip()
+        message = request.form.get('message', '').strip()
+
+        if not name or not email or not message:
+            flash("Please fill in all required fields.")
+            return render_template('contact.html')
+
+        flash("Thank you for reaching out! Your message has been received and our team will get back to you shortly.")
+        return redirect(url_for('contact'))
+
+    return render_template('contact.html')
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404

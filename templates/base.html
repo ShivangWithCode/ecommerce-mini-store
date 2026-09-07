@@ -10,6 +10,7 @@
         <div class="nav-links">
             <a href="{{ url_for('home') }}">Home</a>
             <a href="{{ url_for('about') }}">About</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
             <a href="{{ url_for('cart_page') }}">Cart</a>
             <a href="{{ url_for('order_history') }}">My Orders</a>
             {% if session.user_id %}

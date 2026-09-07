@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Contact Us - MiniStore{% endblock %}
+
+{% block content %}
+<div class="contact-container" style="max-width: 900px; margin: 30px auto; padding: 0 15px;">
+    <div style="text-align: center; margin-bottom: 35px;">
+        <h1 style="margin: 0 0 8px 0; color: #1e293b; font-size: 28px;">Get in Touch With Us</h1>
+        <p class="text-muted" style="font-size: 15px; margin: 0;">Have a question about an order, product, or partnership? We are here to help.</p>
+    </div>
+
+    <div class="contact-grid">
+        <!-- Left: Contact Info -->
+        <div class="contact-info-card">
+            <h3 style="margin-top: 0; margin-bottom: 18px; color: #1e293b; font-size: 18px;">Contact Details</h3>
+
+            <div style="margin-bottom: 18px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Customer Support</div>
+                <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin-top: 3px;">support@ministore.com</div>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Helpline / Phone</div>
+                <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin-top: 3px;">+91 90263 99211</div>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Operating Hours</div>
+                <div style="font-size: 13px; color: #334155; margin-top: 3px;">Monday to Saturday</div>
+                <div style="font-size: 13px; color: #64748b;">9:00 AM – 6:00 PM IST</div>
+            </div>
+
+            <div style="border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Registered Office</div>
+                <div style="font-size: 13px; color: #475569; margin-top: 4px; line-height: 1.4;">
+                    MiniStore India Pvt. Ltd.<br>
+                    Sitapur Road, Lucknow - 226021<br>
+                    Uttar Pradesh, India
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Contact Form -->
+        <div class="contact-form-card">
+            <h3 style="margin-top: 0; margin-bottom: 18px; color: #1e293b; font-size: 18px;">Send Us a Message</h3>
+
+            <form action="{{ url_for('contact') }}" method="POST">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="name" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Your Full Name *</label>
+                    <input type="text" id="name" name="name" required placeholder="Enter your full name" value="{{ session.user_name or '' }}" class="form-control" style="background: #ffffff;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="email" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Email Address *</label>
+                    <input type="email" id="email" name="email" required placeholder="name@example.com" value="{{ session.get('email', '') }}" class="form-control" style="background: #ffffff;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="subject" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Subject</label>
+                    <input type="text" id="subject" name="subject" placeholder="e.g. Order query, Delivery status, General feedback" class="form-control" style="background: #ffffff;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="message" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Your Message *</label>
+                    <textarea id="message" name="message" rows="5" required placeholder="How can we help you today?" class="form-control" style="background: #ffffff; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" class="btn" style="padding: 11px 24px; font-weight: 600; font-size: 14px; width: 100%;">
+                    Submit Message
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
