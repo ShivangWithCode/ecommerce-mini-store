@@ -6,6 +6,7 @@
     <a href="{{ url_for('admin_dashboard') }}" class="admin-tab {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">Dashboard</a>
     <a href="{{ url_for('admin_products') }}" class="admin-tab {% if 'product' in request.endpoint %}active{% endif %}">Products</a>
     <a href="{{ url_for('admin_orders') }}" class="admin-tab {% if request.endpoint == 'admin_orders' %}active{% endif %}">Orders</a>
+    <a href="{{ url_for('admin_messages') }}" class="admin-tab {% if 'message' in request.endpoint %}active{% endif %}">Inquiries</a>
 </div>
 
 {% block admin_content %}{% endblock %}

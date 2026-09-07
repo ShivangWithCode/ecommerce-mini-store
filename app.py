@@ -1018,12 +1018,16 @@ def admin_dashboard():
     cursor.execute("SELECT COUNT(*) AS total_sellers FROM users WHERE role = 'seller'")
     seller_stats = cursor.fetchone()
 
+    cursor.execute("SELECT COUNT(*) AS total_messages FROM contact_messages")
+    msg_stats = cursor.fetchone()
+
     stats = {
         'total_revenue': float(order_stats['total_revenue']) if order_stats else 0.0,
         'total_orders': order_stats['total_orders'] if order_stats else 0,
         'total_products': product_stats['total_products'] if product_stats else 0,
         'total_users': user_stats['total_users'] if user_stats else 0,
         'total_sellers': seller_stats['total_sellers'] if seller_stats else 0,
+        'total_messages': msg_stats['total_messages'] if msg_stats else 0,
     }
 
     cursor.execute("""
@@ -1207,10 +1211,43 @@ def contact():
             flash("Please fill in all required fields.")
             return render_template('contact.html')
 
-        flash("Thank you for reaching out! Your message has been received and our team will get back to you shortly.")
+        try:
+            connection = get_db_connection()
+            cursor = connection.cursor()
+            cursor.execute("""
+                INSERT INTO contact_messages (name, email, subject, message)
+                VALUES (%s, %s, %s, %s)
+            """, (name, email, subject, message))
+            connection.commit()
+            connection.close()
+            flash("Thank you for reaching out! Your message has been received and our team will get back to you shortly.")
+        except Exception as e:
+            flash("An error occurred while sending your message. Please try again.")
+
         return redirect(url_for('contact'))
 
     return render_template('contact.html')
+
+@app.route('/admin/messages')
+@admin_required
+def admin_messages():
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM contact_messages ORDER BY created_at DESC")
+    messages = cursor.fetchall()
+    connection.close()
+    return render_template('admin/messages.html', messages=messages)
+
+@app.route('/admin/messages/delete/<int:msg_id>', methods=['POST'])
+@admin_required
+def admin_delete_message(msg_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("DELETE FROM contact_messages WHERE id = %s", (msg_id,))
+    connection.commit()
+    connection.close()
+    flash("Customer inquiry deleted successfully.")
+    return redirect(url_for('admin_messages'))
 
 @app.errorhandler(404)
 def page_not_found(e):

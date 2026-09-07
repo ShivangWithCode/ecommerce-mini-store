@@ -1,0 +1,60 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}Customer Inquiries{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header-row">
+    <h1 class="page-title">Customer Inquiries & Messages</h1>
+    <span class="badge badge-seller" style="font-size: 13px; padding: 6px 14px;">Total Inquiries: {{ messages|length }}</span>
+</div>
+
+<div class="admin-card">
+    {% if messages %}
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="width: 140px;">Date & Time</th>
+                    <th style="width: 180px;">Customer</th>
+                    <th style="width: 180px;">Subject</th>
+                    <th>Message</th>
+                    <th style="width: 140px; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in messages %}
+                <tr>
+                    <td style="white-space: nowrap; font-size: 13px; color: #64748b;">
+                        {{ m.created_at.strftime('%d %b %Y') if m.created_at else 'Recent' }}
+                        <div style="font-size: 11px; color: #94a3b8;">
+                            {{ m.created_at.strftime('%I:%M %p') if m.created_at else '' }}
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #0f172a; display: block;">{{ m.name }}</strong>
+                        <a href="mailto:{{ m.email }}" class="text-primary" style="font-size: 13px; text-decoration: none;">{{ m.email }}</a>
+                    </td>
+                    <td>
+                        <span style="font-weight: 600; color: #334155; font-size: 13px;">{{ m.subject or 'General Inquiry' }}</span>
+                    </td>
+                    <td>
+                        <div style="font-size: 13px; color: #334155; line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-width: 480px;">{{ m.message }}</div>
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="mailto:{{ m.email }}?subject=Re: {{ (m.subject or 'Your inquiry on MiniStore')|urlencode }}" class="btn-sm btn-edit" style="display: inline-block; text-decoration: none; margin-right: 4px;">Reply</a>
+                        <form action="{{ url_for('admin_delete_message', msg_id=m.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this customer inquiry?');">
+                            <button type="submit" class="btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="text-align: center; padding: 50px 20px;">
+        <h3 style="color: #334155; margin-bottom: 8px;">No Customer Inquiries Yet</h3>
+        <p style="color: #64748b; font-size: 14px; margin: 0;">Customer messages submitted from the Contact page will be recorded and displayed here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
