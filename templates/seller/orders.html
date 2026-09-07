@@ -57,6 +57,9 @@
                     </td>
                     <td>
                         <span class="badge badge-secondary">{{ o.payment_method }}</span>
+                        {% if o.transaction_id %}
+                        <div style="font-size: 11px; color: #64748b; font-family: monospace; margin-top: 3px;">Txn: {{ o.transaction_id }}</div>
+                        {% endif %}
                     </td>
                     <td>
                         <span class="badge badge-{{ o.status|lower }}">{{ o.status }}</span>

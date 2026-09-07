@@ -29,6 +29,16 @@
             <strong>Payment Method:</strong>
             <span>{{ order.payment_method }}</span>
         </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+            <strong>Payment Status:</strong>
+            <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+        </div>
+        {% if order.transaction_id %}
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+            <strong>Transaction ID:</strong>
+            <span style="font-family: monospace; font-weight: 600; color: #1e293b;">{{ order.transaction_id }}</span>
+        </div>
+        {% endif %}
         {% if order.shipping_address %}
         <div>
             <strong>Delivery Address:</strong>

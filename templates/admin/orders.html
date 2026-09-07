@@ -54,12 +54,15 @@
                     <td>
                         <div class="font-bold text-primary">₹{{ "%.2f"|format(o.total_amount) }}</div>
                         <span class="badge badge-payment" style="font-size: 0.75rem; margin-top: 4px; display: inline-block;">{{ o.payment_method or 'COD' }}</span>
+                        {% if o.transaction_id %}
+                        <div style="font-size: 11px; color: #64748b; font-family: monospace; margin-top: 3px;">Txn: {{ o.transaction_id }}</div>
+                        {% endif %}
                     </td>
                     <td><span class="badge badge-{{ o.status|lower }}">{{ o.status }}</span></td>
                     <td>
                         <form action="{{ url_for('admin_update_order_status', order_id=o.id) }}" method="POST" class="status-form">
                             <select name="status" class="select-status">
-                                {% for st in ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] %}
+                                {% for st in ['Pending', 'Paid', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] %}
                                 <option value="{{ st }}" {% if o.status == st %}selected{% endif %}>{{ st }}</option>
                                 {% endfor %}
                             </select>

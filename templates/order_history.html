@@ -14,6 +14,11 @@
                 <div>
                     <h3 style="margin: 0 0 5px 0; color: #1e293b;">Order #{{ order.id }}</h3>
                     <small class="text-muted">Placed on: {{ order.order_date }}</small>
+                    {% if order.transaction_id %}
+                    <small class="text-muted" style="display: block; font-size: 0.78rem; margin-top: 2px;">
+                        Txn ID: <span style="font-family: monospace; color: #475569;">{{ order.transaction_id }}</span>
+                    </small>
+                    {% endif %}
                     {% if order.estimated_delivery and order.status != 'Delivered' and order.status != 'Cancelled' %}
                     <div style="color: #16a34a; font-size: 0.82rem; font-weight: 600; margin-top: 3px;">
                         Expected by: {{ order.estimated_delivery }}

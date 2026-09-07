@@ -774,6 +774,12 @@ body {
     border: 1px solid #ffeeba;
 }
 
+.badge-paid {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
 .badge-processing {
     background: #cce5ff;
     color: #004085;

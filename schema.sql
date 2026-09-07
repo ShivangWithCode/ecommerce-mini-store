@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS orders (
     shipping_address TEXT,
     phone VARCHAR(20),
     payment_method VARCHAR(50) DEFAULT 'COD',
+    transaction_id VARCHAR(100) DEFAULT NULL,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

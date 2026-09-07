@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import os
 import time
+import random
 
 load_dotenv()
 
@@ -501,8 +502,12 @@ def checkout():
                 payment_method = f"Net Banking ({bank_name})"
             else:
                 payment_method = "Online Payment"
+            order_status = 'Paid'
+            transaction_id = f"TXN-{int(time.time())}{random.randint(1000, 9999)}"
         else:
             payment_method = 'Cash on Delivery (COD)'
+            order_status = 'Pending'
+            transaction_id = None
 
         payment_method = payment_method[:50]
 
@@ -523,9 +528,9 @@ def checkout():
 
         try:
             cursor.execute("""
-                INSERT INTO orders (user_id, total_amount, status, shipping_address, phone, payment_method)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (user_id, total, 'Pending', shipping_address, phone, payment_method))
+                INSERT INTO orders (user_id, total_amount, status, shipping_address, phone, payment_method, transaction_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (user_id, total, order_status, shipping_address, phone, payment_method, transaction_id))
             order_id = cursor.lastrowid
 
             for item in cart_items:
@@ -565,7 +570,7 @@ def order_success(order_id):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     cursor.execute("""
-        SELECT id, total_amount, order_date, status, shipping_address, phone, payment_method
+        SELECT id, total_amount, order_date, status, shipping_address, phone, payment_method, transaction_id
         FROM orders
         WHERE id = %s AND user_id = %s
     """, (order_id, user_id))
@@ -629,7 +634,7 @@ def order_history():
     cursor = connection.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT id, total_amount, order_date, status, shipping_address, phone, payment_method
+        SELECT id, total_amount, order_date, status, shipping_address, phone, payment_method, transaction_id
         FROM orders WHERE user_id = %s ORDER BY order_date DESC
     """, (user_id,))
     orders = cursor.fetchall()
@@ -873,7 +878,7 @@ def seller_orders():
 
     cursor.execute("""
         SELECT orders.id AS order_id, orders.order_date, orders.status, orders.shipping_address, orders.phone,
-               orders.payment_method, users.name AS customer_name, users.email AS customer_email,
+               orders.payment_method, orders.transaction_id, users.name AS customer_name, users.email AS customer_email,
                products.name AS product_name, products.image_url,
                order_items.quantity, order_items.price,
                (order_items.quantity * order_items.price) AS item_total
@@ -1049,7 +1054,7 @@ def admin_orders():
 
     cursor.execute("""
         SELECT orders.id, orders.total_amount, orders.order_date, orders.status,
-               orders.shipping_address, orders.phone, orders.payment_method,
+               orders.shipping_address, orders.phone, orders.payment_method, orders.transaction_id,
                users.name AS customer_name, users.email AS customer_email
         FROM orders
         JOIN users ON orders.user_id = users.id

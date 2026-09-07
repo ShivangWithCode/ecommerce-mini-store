@@ -56,6 +56,11 @@
                     <span style="color: #ff6600; font-size: 12px; font-weight: bold;">To be collected upon delivery</span>
                     {% endif %}
                 </div>
+                {% if order.transaction_id %}
+                <div style="font-size: 12px; color: #475569; margin-top: 6px;">
+                    <strong>Txn ID:</strong> <span style="font-family: monospace;">{{ order.transaction_id }}</span>
+                </div>
+                {% endif %}
             </div>
         </div>
 
