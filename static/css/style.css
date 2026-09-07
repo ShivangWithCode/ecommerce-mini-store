@@ -1175,6 +1175,26 @@ body {
     color: #0f172a !important;
 }
 
+.btn-cancel-order {
+    background: #ffffff;
+    color: #dc2626 !important;
+    border: 1px solid #fca5a5;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-cancel-order:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #b91c1c !important;
+}
+
 /* Order List Layout */
 .order-list {
     display: flex;

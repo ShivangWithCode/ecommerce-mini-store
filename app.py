@@ -677,6 +677,48 @@ def order_history():
     connection.close()
     return render_template('order_history.html', all_orders=orders)
 
+@app.route('/orders/cancel/<int:order_id>', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    user_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("SELECT id, status FROM orders WHERE id = %s AND user_id = %s", (order_id, user_id))
+    order = cursor.fetchone()
+
+    if not order:
+        connection.close()
+        flash("Order not found or unauthorized.")
+        return redirect(url_for('order_history'))
+
+    if order['status'] not in ['Pending', 'Paid']:
+        connection.close()
+        flash(f"Order #{order_id} cannot be cancelled as it is already '{order['status']}'.")
+        return redirect(url_for('order_history'))
+
+    try:
+        cursor.execute("UPDATE orders SET status = 'Cancelled' WHERE id = %s", (order_id,))
+
+        # Restore product stock
+        cursor.execute("SELECT product_id, quantity FROM order_items WHERE order_id = %s", (order_id,))
+        items = cursor.fetchall()
+        for item in items:
+            cursor.execute(
+                "UPDATE products SET stock = stock + %s WHERE id = %s",
+                (item['quantity'], item['product_id'])
+            )
+
+        connection.commit()
+        connection.close()
+        flash(f"Order #{order_id} has been cancelled successfully. Stock has been restored.")
+    except Exception as e:
+        connection.rollback()
+        connection.close()
+        flash("An error occurred while cancelling your order.")
+
+    return redirect(url_for('order_history'))
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

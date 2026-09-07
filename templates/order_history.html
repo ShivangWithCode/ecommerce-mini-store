@@ -29,10 +29,15 @@
                     </div>
                     {% endif %}
                 </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <span class="badge badge-payment">{{ order.payment_method or 'COD' }}</span>
                     <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
                     <a href="{{ url_for('view_invoice', order_id=order.id) }}" class="btn-sm btn-invoice" target="_blank" title="View / Print Tax Invoice">Invoice</a>
+                    {% if order.status in ['Pending', 'Paid'] %}
+                    <form action="{{ url_for('cancel_order', order_id=order.id) }}" method="POST" style="margin: 0; display: inline;" onsubmit="return confirm('Are you sure you want to cancel Order #{{ order.id }}?');">
+                        <button type="submit" class="btn-sm btn-cancel-order">Cancel Order</button>
+                    </form>
+                    {% endif %}
                 </div>
             </div>
 
