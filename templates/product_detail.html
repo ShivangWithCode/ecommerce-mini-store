@@ -7,6 +7,13 @@
         <h1>{{ product.name }}</h1>
         <span class="category-badge">{{ product.category }}</span>
         <p class="price">₹{{ product.price }}</p>
+        <div class="product-seller-card">
+            <span class="seller-icon">🏪</span>
+            <div>
+                <span class="seller-subtext">Sold by Verified Seller</span>
+                <div class="seller-store-name">{{ product.seller_name }}</div>
+            </div>
+        </div>
         <div style="margin: 10px 0;">
             {% if product.stock is not none and product.stock <= 0 %}
                 <span class="stock-badge stock-out">Out of Stock</span>

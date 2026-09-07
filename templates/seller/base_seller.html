@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{% block seller_title %}Seller Portal{% endblock %} - MiniStore Marketplace{% endblock %}
+
+{% block content %}
+<div class="seller-header-banner">
+    <div class="seller-profile-brief">
+        <div class="seller-avatar">🏪</div>
+        <div>
+            <h1 class="seller-shop-title">{{ session.shop_name or session.user_name }}</h1>
+            <p class="seller-shop-subtitle">Verified Retailer &bull; MiniStore Multi-Vendor Marketplace</p>
+        </div>
+    </div>
+    <div class="seller-quick-actions">
+        <a href="{{ url_for('seller_add_product') }}" class="btn btn-seller-action">+ List New Product</a>
+    </div>
+</div>
+
+<div class="admin-tabs-nav seller-tabs-nav">
+    <a href="{{ url_for('seller_dashboard') }}" class="admin-tab {% if request.endpoint == 'seller_dashboard' %}active{% endif %}">📊 Overview & Sales</a>
+    <a href="{{ url_for('seller_products') }}" class="admin-tab {% if request.endpoint in ['seller_products', 'seller_add_product', 'seller_edit_product'] %}active{% endif %}">📦 My Products</a>
+    <a href="{{ url_for('seller_orders') }}" class="admin-tab {% if request.endpoint == 'seller_orders' %}active{% endif %}">🛒 Received Orders</a>
+</div>
+
+<div class="seller-content-area">
+    {% block seller_content %}{% endblock %}
+</div>
+{% endblock %}

@@ -1,10 +1,13 @@
-{% extends "admin/base_admin.html" %}
-{% block admin_title %}Manage Products{% endblock %}
+{% extends "seller/base_seller.html" %}
+{% block seller_title %}My Products{% endblock %}
 
-{% block admin_content %}
+{% block seller_content %}
 <div class="admin-header-row">
-    <h1 class="page-title">Manage Products</h1>
-    <a href="{{ url_for('admin_add_product') }}" class="btn">Add New Product</a>
+    <div>
+        <h2 class="page-title">My Listed Products</h2>
+        <p style="color: #666; font-size: 0.9rem; margin-top: 4px;">These products are currently published in the marketplace under your shop name.</p>
+    </div>
+    <a href="{{ url_for('seller_add_product') }}" class="btn">+ Add New Product</a>
 </div>
 
 <div class="admin-card">
@@ -14,11 +17,10 @@
             <thead>
                 <tr>
                     <th>Image</th>
-                    <th>Name</th>
+                    <th>Product Name</th>
                     <th>Category</th>
-                    <th>Seller / Shop</th>
                     <th>Price</th>
-                    <th>Stock</th>
+                    <th>Stock Inventory</th>
                     <th style="text-align: right;">Actions</th>
                 </tr>
             </thead>
@@ -29,22 +31,24 @@
                         <img src="{{ url_for('static', filename='images/' + (p.image_url or 'bag.jpg')) }}" 
                              alt="{{ p.name }}" class="admin-thumb" onerror="this.src='{{ url_for('static', filename='images/bag.jpg') }}'">
                     </td>
-                    <td><strong>{{ p.name }}</strong></td>
+                    <td>
+                        <strong>{{ p.name }}</strong>
+                        <div style="font-size: 0.8rem; color: #888;">ID: #{{ p.id }}</div>
+                    </td>
                     <td><span class="category-badge">{{ p.category }}</span></td>
-                    <td><span class="badge badge-seller">🏪 {{ p.seller_name }}</span></td>
                     <td class="font-bold text-primary">₹{{ "%.2f"|format(p.price) }}</td>
                     <td>
                         {% if p.stock is not none and p.stock <= 0 %}
                             <span class="stock-badge stock-out">Out of Stock (0)</span>
                         {% elif p.stock is not none and p.stock <= 5 %}
-                            <span class="stock-badge stock-low">{{ p.stock }} (Low)</span>
+                            <span class="stock-badge stock-low">{{ p.stock }} units (Low)</span>
                         {% else %}
-                            <span class="stock-badge stock-in">{{ p.stock }} units</span>
+                            <span class="stock-badge stock-in">{{ p.stock }} in stock</span>
                         {% endif %}
                     </td>
                     <td style="text-align: right; white-space: nowrap;">
-                        <a href="{{ url_for('admin_edit_product', product_id=p.id) }}" class="btn-sm btn-edit">Edit</a>
-                        <form action="{{ url_for('admin_delete_product', product_id=p.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?');">
+                        <a href="{{ url_for('seller_edit_product', product_id=p.id) }}" class="btn-sm btn-edit">Edit</a>
+                        <form action="{{ url_for('seller_delete_product', product_id=p.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this product from the marketplace?');">
                             <button type="submit" class="btn-sm btn-danger">Delete</button>
                         </form>
                     </td>
@@ -54,9 +58,10 @@
         </table>
     </div>
     {% else %}
-    <div class="empty-state">
-        <h3>No products found</h3>
-        <a href="{{ url_for('admin_add_product') }}" class="btn">Add Product</a>
+    <div class="empty-state" style="padding: 40px 20px; text-align: center;">
+        <h3>You haven't listed any products yet!</h3>
+        <p style="color: #666; margin: 8px 0 20px;">Start selling by adding your first product to MiniStore Marketplace.</p>
+        <a href="{{ url_for('seller_add_product') }}" class="btn">+ Add First Product</a>
     </div>
     {% endif %}
 </div>

@@ -1,24 +1,82 @@
 {% extends "base.html" %}
-{% block title %}Signup{% endblock %}
+{% block title %}Create Account - MiniStore{% endblock %}
 {% block content %}
-<div class="form-card">
+<div class="form-card" style="max-width: 480px;">
     <h1>Create Account</h1>
+    <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px; text-align: center;">Join MiniStore as a Shopper or register your Store to sell products.</p>
+    
     <form action="{{ url_for('signup') }}" method="POST" onsubmit="return validateSignupForm()">
         <div class="form-group">
-            <label>Name</label>
-            <input type="text" name="name" required>
+            <label style="font-weight: 600; margin-bottom: 8px; display: block;">I want to register as:</label>
+            <div class="role-selector-grid">
+                <label class="role-card" id="role-customer-card">
+                    <input type="radio" name="role" value="customer" id="role-customer" {% if request.args.get('role') != 'seller' %}checked{% endif %} onchange="toggleShopField()">
+                    <div class="role-content">
+                        <span class="role-icon">🛍️</span>
+                        <div>
+                            <strong>Customer</strong>
+                            <small>Shop & buy products</small>
+                        </div>
+                    </div>
+                </label>
+                <label class="role-card" id="role-seller-card">
+                    <input type="radio" name="role" value="seller" id="role-seller" {% if request.args.get('role') == 'seller' %}checked{% endif %} onchange="toggleShopField()">
+                    <div class="role-content">
+                        <span class="role-icon">🏪</span>
+                        <div>
+                            <strong>Seller / Retailer</strong>
+                            <small>List & sell products</small>
+                        </div>
+                    </div>
+                </label>
+            </div>
         </div>
+
         <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email" required>
+            <label>Full Name *</label>
+            <input type="text" name="name" required placeholder="e.g. Rahul Sharma">
         </div>
+
+        <div class="form-group" id="shop-name-group" style="{% if request.args.get('role') != 'seller' %}display: none;{% endif %}">
+            <label>Shop / Business Name *</label>
+            <input type="text" name="shop_name" id="shop_name" placeholder="e.g. Sharma Electronics & Gadgets">
+            <small class="text-muted">This shop name will appear on all your listed products.</small>
+        </div>
+
         <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password" id="password" required>
+            <label>Email Address *</label>
+            <input type="email" name="email" required placeholder="e.g. rahul@example.com">
         </div>
-        <button type="submit" class="btn btn-block">Signup</button>
+
+        <div class="form-group">
+            <label>Password *</label>
+            <input type="password" name="password" id="password" required minlength="6" placeholder="At least 6 characters">
+        </div>
+
+        <button type="submit" class="btn btn-block" id="signup-btn" style="margin-top: 10px;">Create Account</button>
     </form>
     <p class="form-footer">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
 </div>
+
+<script>
+function toggleShopField() {
+    const isSeller = document.getElementById('role-seller').checked;
+    const shopGroup = document.getElementById('shop-name-group');
+    const shopInput = document.getElementById('shop_name');
+    const signupBtn = document.getElementById('signup-btn');
+    
+    if (isSeller) {
+        shopGroup.style.display = 'block';
+        shopInput.required = true;
+        signupBtn.textContent = 'Register as Seller';
+    } else {
+        shopGroup.style.display = 'none';
+        shopInput.required = false;
+        signupBtn.textContent = 'Create Account';
+    }
+}
+// Run once on initial page load
+document.addEventListener('DOMContentLoaded', toggleShopField);
+</script>
 <script src="{{ url_for('static', filename='js/validation.js') }}"></script>
 {% endblock %}

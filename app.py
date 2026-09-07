@@ -33,6 +33,19 @@ def admin_required(f):
     return decorated_function
 
 
+def seller_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash("Please log in to access the seller portal.")
+            return redirect(url_for('login'))
+        if session.get('role') != 'seller' and not session.get('is_admin'):
+            flash("Access denied. Seller privileges required.")
+            return redirect(url_for('home'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
 
@@ -57,25 +70,32 @@ def fetch_filtered_products(search_query='', category='', sort='newest'):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    query = "SELECT id, name, price, description, category, image_url, stock FROM products WHERE 1=1"
+    query = """
+        SELECT products.id, products.name, products.price, products.description, products.category,
+               products.image_url, products.stock, products.seller_id,
+               COALESCE(users.shop_name, users.name, 'MiniStore Official') AS seller_name
+        FROM products
+        LEFT JOIN users ON products.seller_id = users.id
+        WHERE 1=1
+    """
     params = []
 
     if search_query:
-        query += " AND (name LIKE %s OR description LIKE %s)"
+        query += " AND (products.name LIKE %s OR products.description LIKE %s)"
         params.extend([f"%{search_query}%", f"%{search_query}%"])
 
     if category:
-        query += " AND category = %s"
+        query += " AND products.category = %s"
         params.append(category)
 
     if sort == 'price_asc':
-        query += " ORDER BY price ASC"
+        query += " ORDER BY products.price ASC"
     elif sort == 'price_desc':
-        query += " ORDER BY price DESC"
+        query += " ORDER BY products.price DESC"
     elif sort == 'name_asc':
-        query += " ORDER BY name ASC"
+        query += " ORDER BY products.name ASC"
     else:
-        query += " ORDER BY id DESC"
+        query += " ORDER BY products.id DESC"
 
     cursor.execute(query, tuple(params))
     products = cursor.fetchall()
@@ -123,6 +143,7 @@ def api_products():
             'category': p['category'] or 'General',
             'image_url': p['image_url'] or 'bag.jpg',
             'stock': p['stock'] if p['stock'] is not None else 0,
+            'seller_name': p.get('seller_name') or 'MiniStore Official',
             'detail_url': url_for('product_detail', product_id=p['id'])
         })
 
@@ -135,7 +156,14 @@ def api_products():
 def product_detail(product_id):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT id, name, price, description, category, image_url, stock FROM products WHERE id = %s", (product_id,))
+    cursor.execute("""
+        SELECT products.id, products.name, products.price, products.description, products.category,
+               products.image_url, products.stock, products.seller_id,
+               COALESCE(users.shop_name, users.name, 'MiniStore Official') AS seller_name
+        FROM products
+        LEFT JOIN users ON products.seller_id = users.id
+        WHERE products.id = %s
+    """, (product_id,))
     product = cursor.fetchone()
     connection.close()
     return render_template('product_detail.html', product=product)
@@ -312,9 +340,11 @@ def cart_page():
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT products.id, products.name, products.price, cart_items.quantity, products.image_url
+        SELECT products.id, products.name, products.price, cart_items.quantity, products.image_url,
+               COALESCE(users.shop_name, 'MiniStore Official') AS seller_name
         FROM cart_items
         JOIN products ON cart_items.product_id = products.id
+        LEFT JOIN users ON products.seller_id = users.id
         WHERE cart_items.user_id = %s
     """, (user_id,))
 
@@ -331,6 +361,7 @@ def cart_page():
             'price': row[2],
             'quantity': row[3],
             'image_url': row[4],
+            'seller_name': row[5] if len(row) > 5 else 'MiniStore Official',
             'item_total': item_total
         })
         total += item_total
@@ -341,17 +372,24 @@ def cart_page():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        role = request.form.get('role', 'customer').strip().lower()
+        if role not in ['customer', 'seller']:
+            role = 'customer'
+
+        shop_name = request.form.get('shop_name', '').strip() if role == 'seller' else None
+        if role == 'seller' and not shop_name:
+            shop_name = f"{name}'s Store"
 
         if len(password) < 6:
             flash("Password must be at least 6 characters long.")
-            return redirect(url_for('signup'))
+            return redirect(url_for('signup', role=role))
 
-        if len(name.strip()) == 0:
+        if len(name) == 0:
             flash("Name field cannot be empty.")
-            return redirect(url_for('signup'))
+            return redirect(url_for('signup', role=role))
 
         hashed_password = generate_password_hash(password)
 
@@ -360,14 +398,26 @@ def signup():
 
         try:
             cursor.execute(
-                "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
-                (name, email, hashed_password)
+                "INSERT INTO users (name, email, password, role, shop_name) VALUES (%s, %s, %s, %s, %s)",
+                (name, email, hashed_password, role, shop_name)
             )
-
+            user_id = cursor.lastrowid
             connection.commit()
             connection.close()
 
-            return redirect(url_for('home'))
+            # Auto-login after signup
+            session['user_id'] = user_id
+            session['user_name'] = name
+            session['is_admin'] = False
+            session['role'] = role
+            session['shop_name'] = shop_name
+
+            if role == 'seller':
+                flash(f"Welcome, {shop_name or name}! Your Seller Portal is ready.")
+                return redirect(url_for('seller_dashboard'))
+            else:
+                flash(f"Welcome to MiniStore, {name}!")
+                return redirect(url_for('home'))
 
         except mysql.connector.IntegrityError:
             connection.close()
@@ -384,7 +434,8 @@ def checkout():
     cursor = connection.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT products.id, products.name, products.price, products.stock, products.image_url, cart_items.quantity
+        SELECT products.id, products.name, products.price, products.stock, products.image_url, 
+               products.seller_id, cart_items.quantity
         FROM cart_items
         JOIN products ON cart_items.product_id = products.id
         WHERE cart_items.user_id = %s
@@ -430,8 +481,8 @@ def checkout():
 
             for item in cart_items:
                 cursor.execute(
-                    "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (%s, %s, %s, %s)",
-                    (order_id, item['id'], item['quantity'], item['price'])
+                    "INSERT INTO order_items (order_id, product_id, seller_id, quantity, price) VALUES (%s, %s, %s, %s, %s)",
+                    (order_id, item['id'], item.get('seller_id'), item['quantity'], item['price'])
                 )
                 cursor.execute(
                     "UPDATE products SET stock = stock - %s WHERE id = %s",
@@ -547,22 +598,29 @@ def order_history():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
 
         connection = get_db_connection()
-        cursor = connection.cursor()
-        cursor.execute("SELECT id, name, email, password, is_admin FROM users WHERE email = %s", (email,))
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT id, name, email, password, is_admin, role, shop_name FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         connection.close()
 
-        if user and check_password_hash(user[3], password):
-            session['user_id'] = user[0]
-            session['user_name'] = user[1]
-            session['is_admin'] = bool(user[4]) if len(user) > 4 and user[4] else False
+        if user and check_password_hash(user['password'], password):
+            session['user_id'] = user['id']
+            session['user_name'] = user['name']
+            session['is_admin'] = bool(user['is_admin'])
+            user_role = user.get('role') or ('admin' if session['is_admin'] else 'customer')
+            session['role'] = user_role
+            session['shop_name'] = user.get('shop_name')
+
             if session['is_admin']:
-                flash(f"Welcome Admin, {user[1]}!")
+                flash(f"Welcome Admin, {user['name']}!")
                 return redirect(url_for('admin_dashboard'))
+            elif session['role'] == 'seller':
+                flash(f"Welcome Seller, {session['shop_name'] or user['name']}!")
+                return redirect(url_for('seller_dashboard'))
             return redirect(url_for('home'))
         else:
             flash("Invalid email or password.")
@@ -574,6 +632,210 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('home'))
+
+# ===== SELLER / RETAILER PORTAL ROUTES =====
+
+@app.route('/seller')
+@app.route('/seller/dashboard')
+@seller_required
+def seller_dashboard():
+    seller_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("SELECT COUNT(*) AS total_products FROM products WHERE seller_id = %s", (seller_id,))
+    prod_row = cursor.fetchone()
+    total_products = prod_row['total_products'] if prod_row else 0
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(order_items.quantity), 0) AS total_units_sold,
+               COALESCE(SUM(order_items.quantity * order_items.price), 0) AS total_earnings,
+               COUNT(DISTINCT order_items.order_id) AS total_orders
+        FROM order_items
+        WHERE order_items.seller_id = %s
+    """, (seller_id,))
+    sales_row = cursor.fetchone()
+    total_units_sold = sales_row['total_units_sold'] if sales_row else 0
+    total_earnings = float(sales_row['total_earnings']) if sales_row else 0.0
+    total_orders = sales_row['total_orders'] if sales_row else 0
+
+    cursor.execute("""
+        SELECT orders.id AS order_id, orders.order_date, orders.status, orders.shipping_address, orders.phone,
+               products.name AS product_name, products.image_url,
+               order_items.quantity, order_items.price,
+               (order_items.quantity * order_items.price) AS item_total
+        FROM order_items
+        JOIN orders ON order_items.order_id = orders.id
+        JOIN products ON order_items.product_id = products.id
+        WHERE order_items.seller_id = %s
+        ORDER BY orders.order_date DESC
+        LIMIT 8
+    """, (seller_id,))
+    recent_orders = cursor.fetchall()
+    connection.close()
+
+    stats = {
+        'total_products': total_products,
+        'total_units_sold': total_units_sold,
+        'total_earnings': total_earnings,
+        'total_orders': total_orders
+    }
+
+    return render_template('seller/dashboard.html', stats=stats, recent_orders=recent_orders)
+
+@app.route('/seller/products')
+@seller_required
+def seller_products():
+    seller_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT id, name, price, stock, category, image_url
+        FROM products
+        WHERE seller_id = %s
+        ORDER BY id DESC
+    """, (seller_id,))
+    products = cursor.fetchall()
+    connection.close()
+
+    return render_template('seller/products.html', products=products)
+
+@app.route('/seller/products/add', methods=['GET', 'POST'])
+@seller_required
+def seller_add_product():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        price = request.form.get('price', '').strip()
+        description = request.form.get('description', '').strip()
+        category = request.form.get('category', 'General').strip()
+        stock = request.form.get('stock', '15').strip()
+        seller_id = session['user_id']
+
+        if not name or not price:
+            flash("Product name and price are required.")
+            return redirect(url_for('seller_add_product'))
+
+        filename = 'bag.jpg'
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename and allowed_file(file.filename):
+                fname = secure_filename(file.filename)
+                unique_name = f"{int(time.time())}_{fname}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_name))
+                filename = unique_name
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("""
+            INSERT INTO products (name, price, description, category, image_url, stock, seller_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (name, price, description, category, filename, stock, seller_id))
+        connection.commit()
+        connection.close()
+
+        flash(f"Product '{name}' successfully published in your store!")
+        return redirect(url_for('seller_products'))
+
+    return render_template('seller/product_form.html', product=None)
+
+@app.route('/seller/products/edit/<int:product_id>', methods=['GET', 'POST'])
+@seller_required
+def seller_edit_product(product_id):
+    seller_id = session['user_id']
+    is_admin = session.get('is_admin')
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    if is_admin:
+        cursor.execute("SELECT * FROM products WHERE id = %s", (product_id,))
+    else:
+        cursor.execute("SELECT * FROM products WHERE id = %s AND seller_id = %s", (product_id, seller_id))
+    product = cursor.fetchone()
+
+    if not product:
+        connection.close()
+        flash("Product not found or permission denied.")
+        return redirect(url_for('seller_products'))
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        price = request.form.get('price', '').strip()
+        description = request.form.get('description', '').strip()
+        category = request.form.get('category', 'General').strip()
+        stock = request.form.get('stock', '15').strip()
+
+        filename = product['image_url']
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename and allowed_file(file.filename):
+                fname = secure_filename(file.filename)
+                unique_name = f"{int(time.time())}_{fname}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_name))
+                filename = unique_name
+
+        cursor.execute("""
+            UPDATE products
+            SET name = %s, price = %s, description = %s, category = %s, stock = %s, image_url = %s
+            WHERE id = %s
+        """, (name, price, description, category, stock, filename, product_id))
+        connection.commit()
+        connection.close()
+
+        flash(f"Product '{name}' updated successfully.")
+        return redirect(url_for('seller_products'))
+
+    connection.close()
+    return render_template('seller/product_form.html', product=product)
+
+@app.route('/seller/products/delete/<int:product_id>', methods=['POST'])
+@seller_required
+def seller_delete_product(product_id):
+    seller_id = session['user_id']
+    is_admin = session.get('is_admin')
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    if not is_admin:
+        cursor.execute("SELECT id FROM products WHERE id = %s AND seller_id = %s", (product_id, seller_id))
+        if not cursor.fetchone():
+            connection.close()
+            flash("Permission denied.")
+            return redirect(url_for('seller_products'))
+
+    cursor.execute("DELETE FROM cart_items WHERE product_id = %s", (product_id,))
+    cursor.execute("DELETE FROM order_items WHERE product_id = %s", (product_id,))
+    cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
+    connection.commit()
+    connection.close()
+
+    flash("Product deleted successfully.")
+    return redirect(url_for('seller_products'))
+
+@app.route('/seller/orders')
+@seller_required
+def seller_orders():
+    seller_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT orders.id AS order_id, orders.order_date, orders.status, orders.shipping_address, orders.phone,
+               orders.payment_method, users.name AS customer_name, users.email AS customer_email,
+               products.name AS product_name, products.image_url,
+               order_items.quantity, order_items.price,
+               (order_items.quantity * order_items.price) AS item_total
+        FROM order_items
+        JOIN orders ON order_items.order_id = orders.id
+        JOIN products ON order_items.product_id = products.id
+        JOIN users ON orders.user_id = users.id
+        WHERE order_items.seller_id = %s
+        ORDER BY orders.order_date DESC
+    """, (seller_id,))
+    orders = cursor.fetchall()
+    connection.close()
+
+    return render_template('seller/orders.html', orders=orders)
 
 # ===== ADMIN PANEL ROUTES =====
 
@@ -593,11 +855,15 @@ def admin_dashboard():
     cursor.execute("SELECT COUNT(*) AS total_users FROM users WHERE is_admin = FALSE")
     user_stats = cursor.fetchone()
 
+    cursor.execute("SELECT COUNT(*) AS total_sellers FROM users WHERE role = 'seller'")
+    seller_stats = cursor.fetchone()
+
     stats = {
         'total_revenue': float(order_stats['total_revenue']) if order_stats else 0.0,
         'total_orders': order_stats['total_orders'] if order_stats else 0,
         'total_products': product_stats['total_products'] if product_stats else 0,
         'total_users': user_stats['total_users'] if user_stats else 0,
+        'total_sellers': seller_stats['total_sellers'] if seller_stats else 0,
     }
 
     cursor.execute("""
@@ -618,7 +884,14 @@ def admin_dashboard():
 def admin_products():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT id, name, price, description, category, image_url, stock FROM products ORDER BY id DESC")
+    cursor.execute("""
+        SELECT products.id, products.name, products.price, products.description, products.category,
+               products.image_url, products.stock,
+               COALESCE(users.shop_name, 'Admin Direct') AS seller_name
+        FROM products
+        LEFT JOIN users ON products.seller_id = users.id
+        ORDER BY products.id DESC
+    """)
     products = cursor.fetchall()
     connection.close()
     return render_template('admin/products.html', products=products)

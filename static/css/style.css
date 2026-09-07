@@ -1227,3 +1227,200 @@ body {
     }
 }
 
+/* ===== MULTI-VENDOR SELLER PORTAL STYLES ===== */
+
+/* Role Selector Grid in Signup */
+.role-selector-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.role-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+}
+
+.role-card:hover {
+    border-color: #ff6600;
+    background: #fffaf5;
+}
+
+.role-card input[type="radio"] {
+    margin-right: 10px;
+    accent-color: #ff6600;
+}
+
+.role-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.role-icon {
+    font-size: 1.5rem;
+}
+
+.role-content strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.role-content small {
+    display: block;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+/* Seller Tag on Product Cards */
+.seller-tag {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 6px 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.seller-name {
+    color: #ff6600;
+    font-weight: 600;
+}
+
+/* Product Detail Seller Merchant Card */
+.product-seller-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #fff8f0;
+    border: 1px solid #ffd8b2;
+    border-radius: 8px;
+    margin: 12px 0 16px;
+}
+
+.product-seller-card .seller-icon {
+    font-size: 1.8rem;
+}
+
+.product-seller-card .seller-subtext {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8c5214;
+    display: block;
+}
+
+.product-seller-card .seller-store-name {
+    font-size: 1.05rem;
+    color: #b34700;
+    font-weight: 700;
+}
+
+/* Navbar Badges */
+.nav-seller-badge {
+    background: linear-gradient(135deg, #ff6600, #e65c00);
+    color: #ffffff !important;
+    padding: 6px 14px !important;
+    border-radius: 20px;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 6px rgba(255, 102, 0, 0.35);
+    transition: all 0.2s ease;
+}
+
+.nav-seller-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 102, 0, 0.45);
+}
+
+.nav-seller-link {
+    color: #ff6600 !important;
+    font-weight: 600 !important;
+    border: 1px solid #ff6600;
+    padding: 5px 12px !important;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+}
+
+.nav-seller-link:hover {
+    background: #ff6600;
+    color: #ffffff !important;
+}
+
+/* Seller Portal Header Banner */
+.seller-header-banner {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #ffffff;
+    padding: 24px 30px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.seller-profile-brief {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.seller-avatar {
+    font-size: 2.2rem;
+    background: rgba(255, 255, 255, 0.1);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.seller-shop-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.seller-shop-subtitle {
+    color: #94a3b8;
+    font-size: 0.88rem;
+    margin: 4px 0 0;
+}
+
+.btn-seller-action {
+    background: #ff6600;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(255, 102, 0, 0.4);
+    transition: all 0.2s;
+}
+
+.btn-seller-action:hover {
+    background: #e65c00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 102, 0, 0.5);
+}
+
+/* Seller Badges in Tables */
+.badge-seller {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    font-size: 0.82rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+

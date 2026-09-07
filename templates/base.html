@@ -15,10 +15,13 @@
             {% if session.user_id %}
                 {% if session.is_admin %}
                     <a href="{{ url_for('admin_dashboard') }}" class="nav-admin-badge">Admin Panel</a>
+                {% elif session.role == 'seller' %}
+                    <a href="{{ url_for('seller_dashboard') }}" class="nav-seller-badge">🏪 Seller Portal</a>
                 {% endif %}
-                <span class="welcome-text">Hi, {{ session.user_name }}</span>
+                <span class="welcome-text">Hi, {{ session.shop_name or session.user_name }}</span>
                 <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}
+                <a href="{{ url_for('signup') }}?role=seller" class="nav-seller-link">Become a Seller</a>
                 <a href="{{ url_for('signup') }}">Signup</a>
                 <a href="{{ url_for('login') }}">Login</a>
             {% endif %}

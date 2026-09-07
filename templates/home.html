@@ -47,6 +47,9 @@
         <h3><a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.name }}</a></h3>
         <p class="price">₹{{ product.price }}</p>
         <span class="category-badge">{{ product.category }}</span>
+        <div class="seller-tag">
+            <span class="seller-label">Sold by:</span> <strong class="seller-name">{{ product.seller_name }}</strong>
+        </div>
         <div style="margin-top: 8px;">
             {% if product.stock is not none and product.stock <= 0 %}
                 <span class="stock-badge stock-out">Out of Stock</span>

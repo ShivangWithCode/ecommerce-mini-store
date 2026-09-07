@@ -1,0 +1,83 @@
+{% extends "seller/base_seller.html" %}
+{% block seller_title %}Seller Dashboard{% endblock %}
+
+{% block seller_content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(40, 167, 69, 0.12); color: #28a745;">₹</div>
+        <div class="stat-info">
+            <span class="stat-label">Total Earnings</span>
+            <h2 class="stat-value">₹{{ "%.2f"|format(stats.total_earnings) }}</h2>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(255, 102, 0, 0.12); color: #ff6600;">📦</div>
+        <div class="stat-info">
+            <span class="stat-label">Units Sold</span>
+            <h2 class="stat-value">{{ stats.total_units_sold }}</h2>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(23, 162, 184, 0.12); color: #17a2b8;">🛒</div>
+        <div class="stat-info">
+            <span class="stat-label">Customer Orders</span>
+            <h2 class="stat-value">{{ stats.total_orders }}</h2>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1;">🏷️</div>
+        <div class="stat-info">
+            <span class="stat-label">Listed Products</span>
+            <h2 class="stat-value">{{ stats.total_products }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2>Recent Orders For Your Products</h2>
+        <a href="{{ url_for('seller_orders') }}" class="btn-link">View All Orders &rarr;</a>
+    </div>
+
+    {% if recent_orders %}
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Product</th>
+                    <th>Date</th>
+                    <th>Qty</th>
+                    <th>Your Earning</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in recent_orders %}
+                <tr>
+                    <td><strong>#{{ o.order_id }}</strong></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <img src="{{ url_for('static', filename='images/' + (o.image_url or 'bag.jpg')) }}" 
+                                 class="admin-thumb" style="width: 38px; height: 38px;" onerror="this.src='{{ url_for('static', filename='images/bag.jpg') }}'">
+                            <span>{{ o.product_name }}</span>
+                        </div>
+                    </td>
+                    <td>{{ o.order_date }}</td>
+                    <td><span class="badge badge-info">{{ o.quantity }}</span></td>
+                    <td class="font-bold text-success">₹{{ "%.2f"|format(o.item_total) }}</td>
+                    <td><span class="badge badge-{{ o.status|lower }}">{{ o.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding: 40px 20px; text-align: center;">
+        <p style="color: #666; font-size: 1.05rem;">No orders received yet for your products.</p>
+        <p style="color: #888; font-size: 0.9rem;">Once customers purchase items listed by your shop, they will appear here!</p>
+        <a href="{{ url_for('seller_add_product') }}" class="btn" style="margin-top: 15px;">List Another Product</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

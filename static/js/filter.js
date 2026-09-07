@@ -62,6 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3><a href="${p.detail_url}">${escapeHtml(p.name)}</a></h3>
                     <p class="price">₹${p.formatted_price || p.price}</p>
                     <span class="category-badge">${escapeHtml(p.category || 'General')}</span>
+                    <div class="seller-tag">
+                        <span class="seller-label">Sold by:</span> <strong class="seller-name">${escapeHtml(p.seller_name || 'MiniStore Official')}</strong>
+                    </div>
                     <div style="margin-top: 8px;">
                         ${renderStockBadge(p.stock)}
                     </div>
