@@ -1282,11 +1282,14 @@ body {
 
 /* Seller Tag on Product Cards */
 .seller-tag {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: #64748b;
-    margin: 6px 0 4px;
+    margin: 8px auto 4px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
     gap: 4px;
 }
 
