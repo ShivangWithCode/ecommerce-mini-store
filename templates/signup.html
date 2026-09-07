@@ -12,7 +12,6 @@
                 <label class="role-card" id="role-customer-card">
                     <input type="radio" name="role" value="customer" id="role-customer" {% if request.args.get('role') != 'seller' %}checked{% endif %} onchange="toggleShopField()">
                     <div class="role-content">
-                        <span class="role-icon">🛍️</span>
                         <div>
                             <strong>Customer</strong>
                             <small>Shop & buy products</small>
@@ -22,7 +21,6 @@
                 <label class="role-card" id="role-seller-card">
                     <input type="radio" name="role" value="seller" id="role-seller" {% if request.args.get('role') == 'seller' %}checked{% endif %} onchange="toggleShopField()">
                     <div class="role-content">
-                        <span class="role-icon">🏪</span>
                         <div>
                             <strong>Seller / Retailer</strong>
                             <small>List & sell products</small>

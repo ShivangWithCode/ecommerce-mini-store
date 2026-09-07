@@ -31,7 +31,7 @@
                     </td>
                     <td><strong>{{ p.name }}</strong></td>
                     <td><span class="category-badge">{{ p.category }}</span></td>
-                    <td><span class="badge badge-seller">🏪 {{ p.seller_name }}</span></td>
+                    <td><span class="badge badge-seller">{{ p.seller_name }}</span></td>
                     <td class="font-bold text-primary">₹{{ "%.2f"|format(p.price) }}</td>
                     <td>
                         {% if p.stock is not none and p.stock <= 0 %}

@@ -16,7 +16,7 @@
                 {% if session.is_admin %}
                     <a href="{{ url_for('admin_dashboard') }}" class="nav-admin-badge">Admin Panel</a>
                 {% elif session.role == 'seller' %}
-                    <a href="{{ url_for('seller_dashboard') }}" class="nav-seller-badge">🏪 Seller Portal</a>
+                    <a href="{{ url_for('seller_dashboard') }}" class="nav-seller-badge">Seller Portal</a>
                 {% endif %}
                 <span class="welcome-text">Hi, {{ session.shop_name or session.user_name }}</span>
                 <a href="{{ url_for('logout') }}">Logout</a>
