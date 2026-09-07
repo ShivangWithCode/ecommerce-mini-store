@@ -50,7 +50,7 @@
                 <span class="invoice-meta-label">Payment Information:</span>
                 <div class="font-semibold">{{ order.payment_method or 'Cash on Delivery' }}</div>
                 <div style="margin-top: 4px;">
-                    {% if 'online' in (order.payment_method or '')|lower or 'upi' in (order.payment_method or '')|lower %}
+                    {% if 'online' in (order.payment_method or '')|lower or 'upi' in (order.payment_method or '')|lower or 'card' in (order.payment_method or '')|lower or 'banking' in (order.payment_method or '')|lower %}
                     <span style="color: #28a745; font-size: 12px; font-weight: bold;">Paid Online</span>
                     {% else %}
                     <span style="color: #ff6600; font-size: 12px; font-weight: bold;">To be collected upon delivery</span>

@@ -482,7 +482,29 @@ def checkout():
         address = request.form.get('address', '').strip()
         city = request.form.get('city', '').strip()
         pincode = request.form.get('pincode', '').strip()
-        payment_method = request.form.get('payment_method', 'Cash on Delivery (COD)')
+        
+        payment_type = request.form.get('payment_method_type', '').strip()
+        if not payment_type:
+            payment_type = 'Online' if 'online' in request.form.get('payment_method', '').lower() else 'COD'
+
+        if payment_type == 'Online':
+            sub_method = request.form.get('online_sub_method', 'upi')
+            if sub_method == 'upi':
+                upi_id = request.form.get('upi_id', '').strip()
+                payment_method = f"UPI ({upi_id})" if upi_id else "UPI / Online"
+            elif sub_method == 'card':
+                card_number = request.form.get('card_number', '').replace(' ', '').strip()
+                last4 = card_number[-4:] if len(card_number) >= 4 else "Card"
+                payment_method = f"Card (Ending {last4})"
+            elif sub_method == 'netbanking':
+                bank_name = request.form.get('bank_name', 'Net Banking').strip()
+                payment_method = f"Net Banking ({bank_name})"
+            else:
+                payment_method = "Online Payment"
+        else:
+            payment_method = 'Cash on Delivery (COD)'
+
+        payment_method = payment_method[:50]
 
         if not full_name or not phone or not address or not city or not pincode:
             connection.close()

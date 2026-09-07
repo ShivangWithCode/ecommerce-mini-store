@@ -41,21 +41,96 @@
             <h2 style="margin-top: 0; margin-bottom: 15px; font-size: 20px;">2. Payment Method</h2>
             
             <div class="payment-options">
-                <label class="payment-radio-box">
-                    <input type="radio" name="payment_method" value="Cash on Delivery (COD)" checked>
+                <label class="payment-radio-box selected" id="label-cod">
+                    <input type="radio" name="payment_method_type" value="COD" checked onchange="handlePaymentTypeChange()">
                     <div class="payment-text">
                         <strong>Cash on Delivery (COD)</strong>
                         <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Pay via cash or UPI upon delivery.</p>
                     </div>
                 </label>
 
-                <label class="payment-radio-box">
-                    <input type="radio" name="payment_method" value="UPI / Online Payment">
+                <label class="payment-radio-box" id="label-online">
+                    <input type="radio" name="payment_method_type" value="Online" onchange="handlePaymentTypeChange()">
                     <div class="payment-text">
                         <strong>UPI / Online Payment</strong>
-                        <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Google Pay, PhonePe, Paytm, or Net Banking.</p>
+                        <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Instant payment via UPI, Debit/Credit Card, or Net Banking.</p>
                     </div>
                 </label>
+
+                <!-- Online Payment Sub-methods Container -->
+                <div id="online-details-container" style="display: none; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 18px; background: #f8fafc; margin-top: 4px;">
+                    <input type="hidden" name="online_sub_method" id="online_sub_method" value="upi">
+                    
+                    <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                        Select Payment Mode:
+                    </div>
+
+                    <!-- Submethod Tabs -->
+                    <div class="pay-tabs">
+                        <button type="button" class="pay-tab active" id="tab-btn-upi" onclick="switchOnlineTab('upi')">UPI / VPA</button>
+                        <button type="button" class="pay-tab" id="tab-btn-card" onclick="switchOnlineTab('card')">Credit / Debit Card</button>
+                        <button type="button" class="pay-tab" id="tab-btn-netbanking" onclick="switchOnlineTab('netbanking')">Net Banking</button>
+                    </div>
+
+                    <!-- UPI Content -->
+                    <div id="tab-content-upi" class="pay-tab-pane">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label for="upi_id" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Enter UPI ID / VPA</label>
+                            <input type="text" id="upi_id" name="upi_id" placeholder="e.g. yourname@okhdfcbank or mobile@paytm" class="form-control" style="background: #ffffff;">
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px;">
+                            <span style="font-size: 11px; color: #64748b; font-weight: 600;">Quick add:</span>
+                            <button type="button" class="upi-chip" onclick="appendUpiSuffix('@okhdfcbank')">@okhdfcbank</button>
+                            <button type="button" class="upi-chip" onclick="appendUpiSuffix('@okaxis')">@okaxis</button>
+                            <button type="button" class="upi-chip" onclick="appendUpiSuffix('@paytm')">@paytm</button>
+                            <button type="button" class="upi-chip" onclick="appendUpiSuffix('@ybl')">@ybl</button>
+                        </div>
+                        <p style="font-size: 12px; color: #166534; margin: 10px 0 0; font-weight: 500;">
+                            Instant payment simulation verified upon placing order.
+                        </p>
+                    </div>
+
+                    <!-- Card Content -->
+                    <div id="tab-content-card" class="pay-tab-pane" style="display: none;">
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label for="card_number" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Card Number</label>
+                            <input type="text" id="card_number" name="card_number" placeholder="4532 0123 4567 8910" maxlength="19" class="form-control" style="background: #ffffff;" oninput="formatCardNum(this)">
+                        </div>
+                        <div class="form-row" style="margin-bottom: 10px; display: flex; gap: 12px;">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="card_expiry" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Expiry Date</label>
+                                <input type="text" id="card_expiry" name="card_expiry" placeholder="MM/YY" maxlength="5" class="form-control" style="background: #ffffff;" oninput="formatCardExp(this)">
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="card_cvv" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">CVV</label>
+                                <input type="password" id="card_cvv" name="card_cvv" placeholder="123" maxlength="4" class="form-control" style="background: #ffffff;">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 4px;">
+                            <label for="card_name" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Name on Card</label>
+                            <input type="text" id="card_name" name="card_name" placeholder="Full name as printed" class="form-control" style="background: #ffffff;">
+                        </div>
+                    </div>
+
+                    <!-- Net Banking Content -->
+                    <div id="tab-content-netbanking" class="pay-tab-pane" style="display: none;">
+                        <div class="form-group" style="margin-bottom: 6px;">
+                            <label for="bank_name" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Select Your Bank</label>
+                            <select id="bank_name" name="bank_name" class="form-control" style="background: #ffffff;">
+                                <option value="HDFC Bank">HDFC Bank</option>
+                                <option value="State Bank of India">State Bank of India (SBI)</option>
+                                <option value="ICICI Bank">ICICI Bank</option>
+                                <option value="Axis Bank">Axis Bank</option>
+                                <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                                <option value="Punjab National Bank">Punjab National Bank (PNB)</option>
+                                <option value="Bank of Baroda">Bank of Baroda</option>
+                            </select>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 8px 0 0;">
+                            Secure bank payment verification will be completed on order submit.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -107,4 +182,72 @@
         </div>
     </div>
 </form>
+
+<script>
+function handlePaymentTypeChange() {
+    const isOnline = document.querySelector('input[name="payment_method_type"]:checked').value === 'Online';
+    const onlineBox = document.getElementById('online-details-container');
+    const labelCod = document.getElementById('label-cod');
+    const labelOnline = document.getElementById('label-online');
+    
+    if (isOnline) {
+        onlineBox.style.display = 'block';
+        labelOnline.classList.add('selected');
+        labelCod.classList.remove('selected');
+        // Pre-fill a default upi ID if empty for convenience
+        const upiInput = document.getElementById('upi_id');
+        if (!upiInput.value) {
+            upiInput.focus();
+        }
+    } else {
+        onlineBox.style.display = 'none';
+        labelCod.classList.add('selected');
+        labelOnline.classList.remove('selected');
+    }
+}
+
+function switchOnlineTab(tab) {
+    document.getElementById('online_sub_method').value = tab;
+    const tabs = ['upi', 'card', 'netbanking'];
+    tabs.forEach(function(t) {
+        const pane = document.getElementById('tab-content-' + t);
+        const btn = document.getElementById('tab-btn-' + t);
+        if (t === tab) {
+            pane.style.display = 'block';
+            btn.classList.add('active');
+        } else {
+            pane.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function appendUpiSuffix(suffix) {
+    const input = document.getElementById('upi_id');
+    let val = input.value.trim();
+    if (val.includes('@')) {
+        val = val.split('@')[0];
+    }
+    input.value = (val ? val : 'customer') + suffix;
+    input.focus();
+}
+
+function formatCardNum(input) {
+    let val = input.value.replace(/\D/g, '').substring(0, 16);
+    let parts = [];
+    for (let i = 0; i < val.length; i += 4) {
+        parts.push(val.substring(i, i + 4));
+    }
+    input.value = parts.join(' ');
+}
+
+function formatCardExp(input) {
+    let val = input.value.replace(/\D/g, '').substring(0, 4);
+    if (val.length >= 3) {
+        input.value = val.substring(0, 2) + '/' + val.substring(2, 4);
+    } else {
+        input.value = val;
+    }
+}
+</script>
 {% endblock %}
