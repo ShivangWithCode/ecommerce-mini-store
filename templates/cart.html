@@ -1,7 +1,14 @@
 {% extends "base.html" %}
 {% block title %}My Cart{% endblock %}
 {% block content %}
-<h1 class="page-title">My Cart</h1>
+<div class="cart-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h1 class="page-title" style="margin: 0;">My Cart</h1>
+    {% if cart_items %}
+    <form action="{{ url_for('clear_cart') }}" method="POST" onsubmit="return confirm('Are you sure you want to remove all items from your cart?');">
+        <button type="submit" class="btn-clear-cart">Clear Cart</button>
+    </form>
+    {% endif %}
+</div>
 
 {% if cart_items %}
     {% for item in cart_items %}
@@ -14,6 +21,9 @@
             <div>
                 <h3>{{ item.name }}</h3>
                 <p>Price: ₹{{ item.price }}</p>
+                {% if item.seller_name %}
+                <p style="font-size: 0.8rem; color: #777; margin-top: 2px;">Sold by: <strong>{{ item.seller_name }}</strong></p>
+                {% endif %}
             </div>
         </div>
         <div class="qty-control">

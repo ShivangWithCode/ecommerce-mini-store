@@ -229,6 +229,20 @@ def remove_from_cart(product_id):
     connection.close()
     return redirect(url_for('cart_page'))
 
+@app.route('/clear-cart', methods=['GET', 'POST'])
+@login_required
+def clear_cart():
+    user_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("DELETE FROM cart_items WHERE user_id = %s", (user_id,))
+    connection.commit()
+    connection.close()
+
+    flash("Your cart has been cleared.")
+    return redirect(url_for('cart_page'))
+
 @app.route('/increase-quantity/<int:product_id>')
 @login_required
 def increase_quantity(product_id):

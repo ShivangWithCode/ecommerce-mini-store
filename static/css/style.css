@@ -1427,3 +1427,23 @@ body {
     border-radius: 6px;
 }
 
+/* Clear Cart Button */
+.btn-clear-cart {
+    background: transparent;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-clear-cart:hover {
+    background: #dc3545;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+
