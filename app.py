@@ -694,7 +694,7 @@ def cancel_order(order_id):
 
     if order['status'] not in ['Pending', 'Paid']:
         connection.close()
-        flash(f"Order #{order_id} cannot be cancelled as it is already '{order['status']}'.")
+        flash("This order cannot be cancelled as it is already being processed or delivered.")
         return redirect(url_for('order_history'))
 
     try:
@@ -711,7 +711,7 @@ def cancel_order(order_id):
 
         connection.commit()
         connection.close()
-        flash(f"Order #{order_id} has been cancelled successfully. Stock has been restored.")
+        flash("Your order has been cancelled successfully.")
     except Exception as e:
         connection.rollback()
         connection.close()
