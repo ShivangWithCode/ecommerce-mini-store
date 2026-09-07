@@ -227,6 +227,42 @@ def add_to_cart(product_id):
     connection.close()
     return redirect(url_for('cart_page'))
 
+@app.route('/buy-now/<int:product_id>')
+@login_required
+def buy_now(product_id):
+    user_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("SELECT id, name, stock FROM products WHERE id = %s", (product_id,))
+    prod = cursor.fetchone()
+    if not prod:
+        connection.close()
+        flash("Product not found.")
+        return redirect(url_for('home'))
+
+    available_stock = prod['stock'] if prod['stock'] is not None else 0
+    if available_stock <= 0:
+        connection.close()
+        flash(f"Sorry, '{prod['name']}' is out of stock.")
+        return redirect(url_for('product_detail', product_id=product_id))
+
+    cursor.execute(
+        "SELECT quantity FROM cart_items WHERE user_id = %s AND product_id = %s",
+        (user_id, product_id)
+    )
+    existing_item = cursor.fetchone()
+
+    if not existing_item:
+        cursor.execute(
+            "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (%s, %s, %s)",
+            (user_id, product_id, 1)
+        )
+        connection.commit()
+
+    connection.close()
+    return redirect(url_for('checkout'))
+
 @app.route('/remove-from-cart/<int:product_id>')
 @login_required
 def remove_from_cart(product_id):
