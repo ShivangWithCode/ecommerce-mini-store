@@ -491,8 +491,13 @@ def checkout():
         if payment_type == 'Online':
             sub_method = request.form.get('online_sub_method', 'upi')
             if sub_method == 'upi':
-                upi_id = request.form.get('upi_id', '').strip()
-                payment_method = f"UPI ({upi_id})" if upi_id else "UPI / Online"
+                upi_mode = request.form.get('upi_mode', 'qr')
+                if upi_mode == 'qr':
+                    utr = request.form.get('upi_utr', '').strip()
+                    payment_method = f"UPI (QR: {utr})" if utr else "UPI (QR Scan)"
+                else:
+                    upi_id = request.form.get('upi_id', '').strip()
+                    payment_method = f"UPI ({upi_id})" if upi_id else "UPI / Online"
             elif sub_method == 'card':
                 card_number = request.form.get('card_number', '').replace(' ', '').strip()
                 last4 = card_number[-4:] if len(card_number) >= 4 else "Card"
@@ -562,6 +567,26 @@ def checkout():
 @login_required
 def place_order():
     return redirect(url_for('checkout'))
+
+@app.route('/upi-qr')
+def upi_qr():
+    amount = request.args.get('amount', '0.00')
+    upi_pa = os.getenv('UPI_ID', 'ministore@okaxis')
+    upi_pn = os.getenv('STORE_NAME', 'MiniStore')
+    upi_data = f"upi://pay?pa={upi_pa}&pn={upi_pn}&am={amount}&cu=INR&tn=MiniStoreOrder"
+    
+    import qrcode
+    import qrcode.image.svg
+    import io
+    from flask import Response
+
+    qr = qrcode.QRCode(image_factory=qrcode.image.svg.SvgPathImage, box_size=8, border=1)
+    qr.add_data(upi_data)
+    qr.make(fit=True)
+    img = qr.make_image()
+    stream = io.BytesIO()
+    img.save(stream)
+    return Response(stream.getvalue(), mimetype='image/svg+xml')
 
 @app.route('/order-success/<int:order_id>')
 @login_required

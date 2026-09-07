@@ -67,27 +67,64 @@
 
                     <!-- Submethod Tabs -->
                     <div class="pay-tabs">
-                        <button type="button" class="pay-tab active" id="tab-btn-upi" onclick="switchOnlineTab('upi')">UPI / VPA</button>
+                        <button type="button" class="pay-tab active" id="tab-btn-upi" onclick="switchOnlineTab('upi')">UPI & QR Code</button>
                         <button type="button" class="pay-tab" id="tab-btn-card" onclick="switchOnlineTab('card')">Credit / Debit Card</button>
                         <button type="button" class="pay-tab" id="tab-btn-netbanking" onclick="switchOnlineTab('netbanking')">Net Banking</button>
                     </div>
 
                     <!-- UPI Content -->
                     <div id="tab-content-upi" class="pay-tab-pane">
-                        <div class="form-group" style="margin-bottom: 8px;">
-                            <label for="upi_id" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Enter UPI ID / VPA</label>
-                            <input type="text" id="upi_id" name="upi_id" placeholder="e.g. yourname@okhdfcbank or mobile@paytm" class="form-control" style="background: #ffffff;">
+                        <input type="hidden" name="upi_mode" id="upi_mode" value="qr">
+
+                        <!-- Submode Selector (QR vs ID) -->
+                        <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                            <button type="button" class="upi-submode-btn active" id="btn-upi-qr" onclick="toggleUpiSubMode('qr')">
+                                Scan QR Code
+                            </button>
+                            <button type="button" class="upi-submode-btn" id="btn-upi-id" onclick="toggleUpiSubMode('id')">
+                                Enter UPI ID / VPA
+                            </button>
                         </div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px;">
-                            <span style="font-size: 11px; color: #64748b; font-weight: 600;">Quick add:</span>
-                            <button type="button" class="upi-chip" onclick="appendUpiSuffix('@okhdfcbank')">@okhdfcbank</button>
-                            <button type="button" class="upi-chip" onclick="appendUpiSuffix('@okaxis')">@okaxis</button>
-                            <button type="button" class="upi-chip" onclick="appendUpiSuffix('@paytm')">@paytm</button>
-                            <button type="button" class="upi-chip" onclick="appendUpiSuffix('@ybl')">@ybl</button>
+
+                        <!-- Dynamic QR View -->
+                        <div id="upi-qr-view" style="text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 14px;">
+                            <div style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 10px;">
+                                Scan with any UPI App
+                            </div>
+                            <div style="margin: 0 auto; width: 175px; height: 175px; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                <img src="{{ url_for('upi_qr') }}?amount={{ '%.2f'|format(total) }}" alt="Dynamic UPI QR Code" style="width: 100%; height: 100%; object-fit: contain;">
+                            </div>
+                            <div style="margin-top: 12px;">
+                                <span style="display: inline-block; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-weight: 700; font-size: 14px; padding: 4px 16px; border-radius: 20px;">
+                                    Pay: ₹{{ "%.2f"|format(total) }}
+                                </span>
+                            </div>
+                            <p style="font-size: 11px; color: #64748b; margin: 8px 0 12px; font-weight: 500;">
+                                Google Pay &bull; PhonePe &bull; Paytm &bull; BHIM &bull; Any Banking UPI
+                            </p>
+                            <div style="max-width: 280px; margin: 0 auto;">
+                                <label for="upi_utr" style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">UTR / UPI Reference No. (Optional)</label>
+                                <input type="text" id="upi_utr" name="upi_utr" placeholder="e.g. 423987123456" maxlength="12" class="form-control" style="font-size: 12px; text-align: center; font-family: monospace; background: #f8fafc;">
+                            </div>
                         </div>
-                        <p style="font-size: 12px; color: #166534; margin: 10px 0 0; font-weight: 500;">
-                            Instant payment simulation verified upon placing order.
-                        </p>
+
+                        <!-- Manual UPI ID View -->
+                        <div id="upi-id-view" style="display: none;">
+                            <div class="form-group" style="margin-bottom: 8px;">
+                                <label for="upi_id" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Enter UPI ID / VPA</label>
+                                <input type="text" id="upi_id" name="upi_id" placeholder="e.g. yourname@okhdfcbank or mobile@paytm" class="form-control" style="background: #ffffff;">
+                            </div>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px;">
+                                <span style="font-size: 11px; color: #64748b; font-weight: 600;">Quick add:</span>
+                                <button type="button" class="upi-chip" onclick="appendUpiSuffix('@okhdfcbank')">@okhdfcbank</button>
+                                <button type="button" class="upi-chip" onclick="appendUpiSuffix('@okaxis')">@okaxis</button>
+                                <button type="button" class="upi-chip" onclick="appendUpiSuffix('@paytm')">@paytm</button>
+                                <button type="button" class="upi-chip" onclick="appendUpiSuffix('@ybl')">@ybl</button>
+                            </div>
+                            <p style="font-size: 12px; color: #166534; margin: 10px 0 0; font-weight: 500;">
+                                Instant payment simulation verified upon placing order.
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Card Content -->
@@ -247,6 +284,28 @@ function formatCardExp(input) {
         input.value = val.substring(0, 2) + '/' + val.substring(2, 4);
     } else {
         input.value = val;
+    }
+}
+
+function toggleUpiSubMode(mode) {
+    document.getElementById('upi_mode').value = mode;
+    const qrView = document.getElementById('upi-qr-view');
+    const idView = document.getElementById('upi-id-view');
+    const btnQr = document.getElementById('btn-upi-qr');
+    const btnId = document.getElementById('btn-upi-id');
+    
+    if (mode === 'qr') {
+        qrView.style.display = 'block';
+        idView.style.display = 'none';
+        btnQr.classList.add('active');
+        btnId.classList.remove('active');
+    } else {
+        qrView.style.display = 'none';
+        idView.style.display = 'block';
+        btnId.classList.add('active');
+        btnQr.classList.remove('active');
+        const upiInput = document.getElementById('upi_id');
+        if (upiInput) upiInput.focus();
     }
 }
 </script>
