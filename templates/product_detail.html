@@ -28,6 +28,9 @@
         {% else %}
             <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="btn">Add to Cart</a>
         {% endif %}
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 14px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
+            <strong>Estimated Delivery:</strong> Dispatches within 24 hours (3-5 business days)
+        </p>
     </div>
 </div>
 {% endblock %}

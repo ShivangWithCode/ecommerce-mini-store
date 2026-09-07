@@ -19,6 +19,9 @@
                 <h2 style="margin: 0; font-size: 20px;">INVOICE</h2>
                 <div style="margin-top: 4px; font-size: 14px;"><strong>Invoice #:</strong> MS-{{ order.id }}</div>
                 <div style="font-size: 13px;" class="text-muted"><strong>Date:</strong> {{ order.order_date }}</div>
+                {% if estimated_delivery %}
+                <div style="font-size: 13px; color: #15803d; margin-top: 3px;"><strong>Estimated Delivery:</strong> {{ estimated_delivery }}</div>
+                {% endif %}
                 <div style="margin-top: 5px;">
                     <span class="badge badge-{{ order.status|lower }}">{{ order.status }}</span>
                 </div>

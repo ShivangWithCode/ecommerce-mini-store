@@ -5,10 +5,23 @@ from werkzeug.utils import secure_filename
 import mysql.connector
 from functools import wraps
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 import os
 import time
 
 load_dotenv()
+
+def calculate_estimated_delivery(order_date, days=4):
+    if not order_date:
+        return "3-5 Business Days"
+    try:
+        if isinstance(order_date, str):
+            dt = datetime.strptime(order_date, '%Y-%m-%d %H:%M:%S')
+        else:
+            dt = order_date
+        return (dt + timedelta(days=days)).strftime('%a, %d %b %Y')
+    except Exception:
+        return "3-5 Business Days"
 
 
 def login_required(f):
@@ -541,7 +554,8 @@ def order_success(order_id):
         flash("Order not found.")
         return redirect(url_for('home'))
 
-    return render_template('order_success.html', order=order)
+    est_delivery = calculate_estimated_delivery(order['order_date'], days=4)
+    return render_template('order_success.html', order=order, estimated_delivery=est_delivery)
 
 @app.route('/order/invoice/<int:order_id>')
 @app.route('/invoice/<int:order_id>', endpoint='view_invoice')
@@ -582,7 +596,8 @@ def order_invoice(order_id):
     items = cursor.fetchall()
     connection.close()
 
-    return render_template('invoice.html', order=order, items=items)
+    est_delivery = calculate_estimated_delivery(order['order_date'], days=4)
+    return render_template('invoice.html', order=order, items=items, estimated_delivery=est_delivery)
 
 @app.route('/orders')
 @login_required
@@ -598,6 +613,7 @@ def order_history():
     orders = cursor.fetchall()
 
     for order in orders:
+        order['estimated_delivery'] = calculate_estimated_delivery(order['order_date'], days=4)
         cursor.execute("""
             SELECT products.name, order_items.quantity, order_items.price
             FROM order_items
